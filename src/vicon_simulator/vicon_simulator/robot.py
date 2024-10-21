@@ -62,7 +62,7 @@ class RobotPoseSimulatorNode(Node):
         msg.pose.position = point
         msg.pose.orientation = orientation
 
-        self.get_logger().info(f'Robot position: x={self.robot.z[0]:0.2f} y={self.robot.z[1]:0.2f} theta={self.robot.z[2]:0.2f}')
+        self.get_logger().debug(f'Robot position: x={self.robot.z[0]:0.2f} y={self.robot.z[1]:0.2f} theta={self.robot.z[2]:0.2f}')
         self.pub.publish(msg)
         
 
