@@ -1,5 +1,5 @@
 # ROS2 Examples
-[Installation](#installation)
+[Installation](#installation) | [Misc tips](#tips--other-resources)
 
 # Installation
 ```
