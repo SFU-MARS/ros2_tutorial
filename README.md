@@ -1,4 +1,6 @@
 # ROS2 Examples
+[Installation](#installation) | [Misc tips](#tips--other-resources)
+
 # Installation
 ```
 colcon build --symlink-install
@@ -12,6 +14,14 @@ You should already have Docker and VSCode with the remote containers plugin inst
 * [docker](https://docs.docker.com/engine/install/)
 * [vscode](https://code.visualstudio.com/)
 * [vscode remote containers plugin](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+To use docker with sudo and connect to the container with VS code following the [postinstall instructions](https://docs.docker.com/engine/install/linux-postinstall/).
+
+`sudo groupadd docker`
+
+`sudo usermod -aG docker $USER`
+
+`newgrp docker`
 
 ## Open it in vscode
 
@@ -31,3 +41,21 @@ VSCode will build the dockerfile inside of `.devcontainer` for you.  If you open
 
 ![template_container](https://user-images.githubusercontent.com/6098197/91332895-adbf1500-e781-11ea-8afc-7a22a5340d4a.png)
 
+# Tips / other resources
+## Rosbags
+Rosbags are used to record ROS data.
+
+[Basic tutorial](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Recording-And-Playing-Back-Data/Recording-And-Playing-Back-Data.html) | [Advanced tutorials](https://docs.ros.org/en/humble/Tutorials/Advanced.html) | [Repo](https://github.com/ros2/rosbag2)
+
+### Tools for working with rosbags (and ROS2 in general)
+- PlotJuggler: [Website](https://plotjuggler.io/) | [Repo](https://github.com/facontidavide/PlotJuggler)
+- This [Medium post](https://medium.com/evocargo/9-awesome-open-source-tools-to-manage-your-rosbags-b350fdb651c8) contains some other tools (potentially outdated)
+
+### Recording and playing back data using rosbags and plotjuggler
+1. `sudo apt install ros-${ROS_DISTRO}-plotjuggler-ros` 
+2. Record the desired topics to some output folder: `ros2 bag record <topics> -o <output_folder>`
+  - Example: `ros2 bag record /tf /cmd_vel -o test`
+  - A default file name will be used if the `-o` option is not used
+  - **Warning**: Using `ros2 bag record --all` will usually result in _gigantic_ file sizes
+3. `ros2 run plotjuggler plotjuggler`
+4. Load data or stream from current topics
