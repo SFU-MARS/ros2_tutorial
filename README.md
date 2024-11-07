@@ -53,13 +53,12 @@ You should already have Docker and VSCode with the remote containers plugin inst
 * [vscode](https://code.visualstudio.com/)
 * [vscode remote containers plugin](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
-To use docker with sudo and connect to the container with VS code following the [postinstall instructions](https://docs.docker.com/engine/install/linux-postinstall/).
-
-`sudo groupadd docker`
-
-`sudo usermod -aG docker $USER`
-
-`newgrp docker`
+If VSCode complains that `docker` cannot be run without `sudo`, run the following in terminal (from the [Docker postinstall instructions](https://docs.docker.com/engine/install/linux-postinstall/)).
+```
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
+```
 
 ## Open it in vscode
 
