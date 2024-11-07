@@ -1,22 +1,38 @@
 # ROS2 Examples
-[Installation](#installation) | [Misc tips](#tips--other-resources)
+[Building the container](#building-the-dev-container) | [Nav2 Quickstart](#quickstart-for-nav2) | [Misc tips](#tips--other-resources)
 
-
-Example workspace for using ROS2 Humble. 
+Example workspace for using ROS2 Humble with navigation 2 installed. 
 
 Initial workspace template is built upon [athackst/vscode_ros2_workspace](https://github.com/athackst/vscode_ros2_workspace)
 
 * An example of a basic publisher and subscriber can be found [here](src/controller/controller/controller.py).
-* An example of a basical launch file can be found [here](src/controller/launch/experiment.launch.py)
+* An example of a basic launch file can be found [here](src/controller/launch/experiment.launch.py)
 
-Note the necessary changes to the default `src/controller/setup.py` file to correctly run the node and lauch file.
+Note the necessary changes to the default `src/controller/setup.py` file to correctly run the node and launch file.
 
-# Installation
+# Quickstart for nav2
+## Host computer
+1. [Build the dev container](#building-the-dev-container)
+2. Run `ifconfig` in a terminal on the **host** to obtain the desired network interface 
+  - It should be something like `eth0` or `enp39s0` for ethernet connections, or `wlan0` for wireless connections
+
+## Dev container
+1. Replace `eth0` in `cyclonedds.xml` with the correct network interface obtained from the above
+2. Run turtlebot3 simulation: `ros2 launch nav2_bringup tb3_simulation_launch.py headless:=False`
+
+## Known issues
+- If Gazebo does not load correctly (e.g. the turtlebot is not found), the following may help
+  - Stop the simulation (Ctrl + C in terminal) and restart the simulation
+  - Run `pkill -9 gzclient` and/or `pkill -9 gzserver` in the terminal before restarting the simulation
+
+# Installing packages that come with the dev container
 ```
 colcon build --symlink-install
 source install/setup.bash
 ros2 launch controller experiment.launch.py
 ```
+
+# Building the dev container
 
 ## Prerequisites
 
@@ -53,6 +69,16 @@ VSCode will build the dockerfile inside of `.devcontainer` for you.  If you open
 ![template_container](https://user-images.githubusercontent.com/6098197/91332895-adbf1500-e781-11ea-8afc-7a22a5340d4a.png)
 
 # Tips / other resources
+## Running simulations locally (advanced)
+This is useful for avoiding broadcasting any messages to the network
+
+### On host computer
+Run `ip link set lo multicast on` in terminal
+
+### Inside the devcontainer
+1. In `~/.bashrc`, change the line `export CYCLONEDDS_URI=/workspaces/ros2_tutorial/cyclonedds.xml` to `export CYCLONEDDS_URI=/workspaces/ros2_tutorial/cyclonedds_lo.xml`
+2. Run `ros2 daemon stop && ros2 daemon start` in terminal
+
 ## Rosbags
 Rosbags are used to record ROS data.
 
