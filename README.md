@@ -20,6 +20,17 @@ Note the necessary changes to the default `src/controller/setup.py` file to corr
 1. Replace `eth0` in `cyclonedds.xml` with the correct network interface obtained from the above
 2. Run turtlebot3 simulation: `ros2 launch nav2_bringup tb3_simulation_launch.py headless:=False`
 
+## Robot (real world, e.g. TurtleBot3)
+1. Make sure to have the following in `~/.bashrc`:
+```
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export ROS_DOMAIN_ID=5 # This domain ID should be the same as the computer's
+export CYCLONEDDS_URI=~/ros2_ws/cyclonedds.xml # Make sure the workspace directory is correct
+```
+2. Install cyclonedds if needed: `sudo apt install ros-humble-rmw-cyclonedds-cpp`
+3. Make sure the the network interface in `cyclonedds.xml` is correct
+
+
 ## Known issues
 - If Gazebo does not load correctly (e.g. the turtlebot is not found), the following may help
   - Stop the simulation (Ctrl + C in terminal) and restart the simulation
@@ -69,7 +80,7 @@ VSCode will build the dockerfile inside of `.devcontainer` for you.  If you open
 ![template_container](https://user-images.githubusercontent.com/6098197/91332895-adbf1500-e781-11ea-8afc-7a22a5340d4a.png)
 
 # Tips / other resources
-## Running simulations locally (advanced)
+## Forcing simulations to run locally (advanced)
 This is useful for avoiding broadcasting any messages to the network
 
 ### On host computer
