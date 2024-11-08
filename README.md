@@ -101,7 +101,7 @@ VSCode will build the dockerfile inside of `.devcontainer` for you.  If you open
 This is useful for avoiding broadcasting any messages to the network
 
 #### On host computer
-Run `ip link set lo multicast on` in terminal
+Run `sudo ip link set lo multicast on` in terminal
 
 #### Inside the devcontainer
 1. In `~/.bashrc`, change the line `export CYCLONEDDS_URI=/workspaces/ros2_tutorial/cyclonedds.xml` to `export CYCLONEDDS_URI=/workspaces/ros2_tutorial/cyclonedds_lo.xml`
