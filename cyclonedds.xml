@@ -1,0 +1,9 @@
+<CycloneDDS>
+  <Domain>
+    <General>
+      <Interfaces>
+        <NetworkInterface name="eth0"/>
+      </Interfaces>
+    </General>
+  </Domain>
+</CycloneDDS>
