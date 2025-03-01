@@ -1,0 +1,18 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/mnt/c/Users/Andy/ros2_tutorial/install/vicon_simulator/lib/python3.10/site-packages",
+        "/mnt/c/Users/Andy/ros2_tutorial/install/controller/lib/python3.10/site-packages",
+        "/mnt/c/Users/Andy/ros2_ws/build/my_robot_controller",
+        "/mnt/c/Users/Andy/ros2_ws/install/my_robot_controller/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/mnt/c/Users/Andy/ros2_tutorial/install/vicon_simulator/lib/python3.10/site-packages",
+        "/mnt/c/Users/Andy/ros2_tutorial/install/controller/lib/python3.10/site-packages",
+        "/mnt/c/Users/Andy/ros2_ws/build/my_robot_controller",
+        "/mnt/c/Users/Andy/ros2_ws/install/my_robot_controller/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}

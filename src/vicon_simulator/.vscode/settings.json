@@ -1,0 +1,26 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/mnt/c/Users/Andy/ros2_ws/build/box_bot_gazebo",
+        "/mnt/c/Users/Andy/ros2_ws/install/box_bot_gazebo/lib/python3.10/site-packages",
+        "/mnt/c/Users/Andy/ros2_ws/build/box_bot_description",
+        "/mnt/c/Users/Andy/ros2_ws/install/box_bot_description/lib/python3.10/site-packages",
+        "/workspaces/ros2_tutorial/build/vicon_simulator",
+        "/mnt/c/Users/Andy/ros2_tutorial/install/vicon_simulator/lib/python3.10/site-packages",
+        "/workspaces/ros2_tutorial/build/controller",
+        "/mnt/c/Users/Andy/ros2_tutorial/install/controller/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/mnt/c/Users/Andy/ros2_ws/build/box_bot_gazebo",
+        "/mnt/c/Users/Andy/ros2_ws/install/box_bot_gazebo/lib/python3.10/site-packages",
+        "/mnt/c/Users/Andy/ros2_ws/build/box_bot_description",
+        "/mnt/c/Users/Andy/ros2_ws/install/box_bot_description/lib/python3.10/site-packages",
+        "/workspaces/ros2_tutorial/build/vicon_simulator",
+        "/mnt/c/Users/Andy/ros2_tutorial/install/vicon_simulator/lib/python3.10/site-packages",
+        "/workspaces/ros2_tutorial/build/controller",
+        "/mnt/c/Users/Andy/ros2_tutorial/install/controller/lib/python3.10/site-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}
