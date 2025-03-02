@@ -24,6 +24,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            "spawn_multiple_robots= multiple_robots_simulation.spawn_multiple_robots:main",
         ],
     },
 )
