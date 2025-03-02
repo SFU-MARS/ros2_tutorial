@@ -12,9 +12,6 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('multiple_robots_simulation')
     world_file = os.path.join(pkg_dir, 'worlds', 'empty.world')
     
-    # Launch configuration variables
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    
     # Include the Gazebo launch file with our world
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
