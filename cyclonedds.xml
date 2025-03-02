@@ -2,7 +2,7 @@
   <Domain>
     <General>
       <Interfaces>
-        <NetworkInterface name="eth0"/>
+        <NetworkInterface name="enp0s31f6"/>
       </Interfaces>
     </General>
   </Domain>

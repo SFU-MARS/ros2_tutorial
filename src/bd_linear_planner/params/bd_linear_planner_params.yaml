@@ -1,0 +1,9 @@
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 20.0
+    use_sim_time: True
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "bd_linear_planner/BDLinearPlanner"
+      path_resolution: 0.05
+      check_for_collisions: true 

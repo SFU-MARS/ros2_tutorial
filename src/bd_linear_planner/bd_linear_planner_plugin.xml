@@ -1,0 +1,7 @@
+<library path="bd_linear_planner">
+  <class name="bd_linear_planner/BDLinearPlanner" type="bd_linear_planner::BDLinearPlanner" base_class_type="nav2_core::GlobalPlanner">
+    <description>
+      A simple linear planner that creates a straight-line path between start and goal.
+    </description>
+  </class>
+</library> 
