@@ -13,7 +13,7 @@ class MultiRobotSpawner(Node):
         def __init__(self):
                 super().__init__('multi_robot_spawner')
                 self.robots = []
-                self.robot_count = 1
+                self.robot_count = 3
                 self.config = {
                         'robot_colors': ['Blue', 'Red', 'Green'],
                         'robot_positions': [
@@ -34,10 +34,10 @@ class MultiRobotSpawner(Node):
                 urdf_path = os.path.join(package_dir, 'models', 'box_bot.urdf')
                 
                 for i in range(self.robot_count):
-                        robot_name = f'robot_{i}'
+                        robot_name = f'tb_{i}'
                         robot_pos = self.config['robot_positions'][i]
                         
-                        urdf_content = ET.tostring(ET.parse(urdf_path).getroot(), encoding='unicode')  
+                        urdf_content = self.modify_urdf_namespace(urdf_path, robot_name) 
                         
                         # Create pose for the robot
                         pose = Pose()
@@ -65,6 +65,60 @@ class MultiRobotSpawner(Node):
                                 
                         time.sleep(0.5)
 
+        def modify_urdf_namespace(self, urdf_file_path, robot_namespace):
+                # modify based on: https://bitbucket.org/theconstructcore/box_bot/src/foxy/box_bot_description/launch/spawn_box_bot_v2.py
+                try:
+                        tree = ET.parse(urdf_file_path)
+                        root = tree.getroot()
+                        diff_drive_plugin = None
+                        imu_plugin = None
+                
+                        for plugin in root.findall('.//plugin'):
+                                if plugin.get('name') == 'differential_drive_controller':
+                                        diff_drive_plugin = plugin
+                                elif plugin.get('name') == 'box_bot_imu_plugin':
+                                        imu_plugin = plugin
+                                
+                        if diff_drive_plugin is not None:
+                                ros_element = diff_drive_plugin.find('./ros')
+                                ros_element = ET.SubElement(diff_drive_plugin, 'ros')
+                                
+                                # Add namespace element and tf remapping
+                                namespace_element = ET.SubElement(ros_element, 'namespace')
+                                namespace_element.text = '/' + robot_namespace
+                                remap_element = ET.SubElement(ros_element, 'remapping')
+                                remap_element.text = '/tf:=/' + robot_namespace + '/tf'
+                                
+                                # Update odometry frames
+                                odometry_frame = diff_drive_plugin.find('./odometry_frame')
+                                odometry_frame.text = robot_namespace + '/odom'
+                                robot_base_frame = diff_drive_plugin.find('./robot_base_frame')
+                                robot_base_frame.text = robot_namespace + '/chassis'
+                                
+                                # Update topic names
+                                cmd_vel_topic = diff_drive_plugin.find('./cmd_vel_topic')
+                                cmd_vel_topic.text = robot_namespace + '/cmd_vel'
+                                
+                                odometry_topic = diff_drive_plugin.find('./odometry_topic')
+                                odometry_topic.text = robot_namespace + '/odom'
+                        
+                        if imu_plugin is not None:
+                                ros_element = imu_plugin.find('./ros')
+                                if ros_element is not None:
+                                        for arg in ros_element.findall('./argument'):
+                                                if 'out:=' in arg.text:
+                                                        pass
+
+                                        remap_element = ET.SubElement(ros_element, 'remapping')
+                                        remap_element.text = '/tf:=/' + robot_namespace + '/tf'
+                                
+                        return ET.tostring(root, encoding='unicode')
+                
+                except Exception as e:
+                        #Can't modify the URDF file 
+                        self.get_logger().error(f'Error modifying URDF: {e}')
+                        with open(urdf_file_path, 'r') as file:
+                                return file.read()
 
 def main(args=None):
         rclpy.init(args=args)
