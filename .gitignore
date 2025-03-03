@@ -2,3 +2,4 @@ build/*
 install/*
 log/*
 site/*
+src/multiple_robots_simulation/multiple_robots_simulation/__pycache__/*
