@@ -16,6 +16,7 @@ setup(
         (os.path.join('share', package_name, 'worlds'), glob('worlds/*.world')),
         (os.path.join('share', package_name, 'models'), glob('models/*.urdf.xacro')),
         (os.path.join('share', package_name, 'models'), glob('models/*.urdf')),
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

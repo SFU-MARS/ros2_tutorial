@@ -4,9 +4,7 @@ from rclpy.node import Node
 from gazebo_msgs.srv import SpawnEntity
 from geometry_msgs.msg import Pose
 from ament_index_python.packages import get_package_share_directory
-import subprocess
 import time
-import re
 import xml.etree.ElementTree as ET
 
 class MultiRobotSpawner(Node):
@@ -15,7 +13,6 @@ class MultiRobotSpawner(Node):
                 self.robots = []
                 self.robot_count = 3
                 self.config = {
-                        'robot_colors': ['Blue', 'Red', 'Green'],
                         'robot_positions': [
                                 [0.0, 0.0, 0.15],
                                 [1.0, 0.0, 0.15],
