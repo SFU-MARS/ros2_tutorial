@@ -13,11 +13,14 @@ class MultiRobotSpawner(Node):
                 super().__init__('multi_robot_spawner')
                 self.robots = []
 
-                try:
-                        config_file = self.get_parameter('config_file').get_parameter_value().string_value
-                        package_dir = get_package_share_directory('multiple_robots_simulation')
-                        self.urdf_file = self.get_parameter('urdf_file').get_parameter_value().string_value
+                self.declare_parameter('config_file', 'robot_config.yaml')
+                self.declare_parameter('urdf_file', 'box_bot.urdf')
 
+                config_file = self.get_parameter('config_file').get_parameter_value().string_value
+                package_dir = get_package_share_directory('multiple_robots_simulation')
+                self.urdf_file = self.get_parameter('urdf_file').get_parameter_value().string_value
+
+                try:
                         config_path = os.path.join(package_dir, 'config', config_file)
                         with open(config_path, 'r') as f:
                                 self.config = yaml.safe_load(f)
@@ -25,7 +28,7 @@ class MultiRobotSpawner(Node):
                 except Exception as e:
                         self.get_logger().warn(f'Could not load config file: {e}')
                         self.config = {
-                                'robot_count': "3",
+                                'robot_count': "2",
                                 'robot_positions': [
                                         [0.0, 0.0, 0.0],
                                         [1.0, 0.0, 0.0],
@@ -37,7 +40,6 @@ class MultiRobotSpawner(Node):
                                         [1.0, -1.0, 0.0]
                                 ]
                         }
-                        self.urdf_file = "box_bot.urdf"
                 
                 self.robot_count = min(int(self.config['robot_count']) , len(self.config['robot_positions']))
 
