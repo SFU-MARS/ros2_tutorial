@@ -14,7 +14,12 @@ def generate_launch_description():
             pkg_dir, 'launch', 'start_empty_world.launch.py')])
     )
     
+    spawner_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            pkg_dir, 'launch', 'spawn_robots.launch.py')])
+    )
     
     return LaunchDescription([
         gazebo_launch,
+        spawner_launch
     ])

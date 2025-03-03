@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!-- =================================================================================== -->
-<!-- | Reference from https://bitbucket.org/theconstructcore/box_bot/src/foxy/box_bot_description/robot/box_bot_v2.urdf | -->
+<!-- | simple robot testing                                                            | -->
 <!-- =================================================================================== -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="simple_robot">
 
