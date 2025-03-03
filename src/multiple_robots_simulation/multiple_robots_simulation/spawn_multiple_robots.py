@@ -26,6 +26,3 @@ class MultiRobotSpawner(Node):
                 self.spawn_client = self.create_client(SpawnEntity, '/spawn_entity')
                 while not self.spawn_client.wait_for_service(timeout_sec=1.0):
                         self.get_logger().info("waiting")
-                        
-                self.spawn_robots()
-                
