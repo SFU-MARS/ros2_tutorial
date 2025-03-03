@@ -1,4 +1,4 @@
-robot_number: 3
+robot_count: 3
 
 robot_positions:
   - [0.0, 0.0, 0.0]

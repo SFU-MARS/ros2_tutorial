@@ -1,5 +1,6 @@
 import os
 import rclpy
+import yaml
 from rclpy.node import Node
 from gazebo_msgs.srv import SpawnEntity
 from geometry_msgs.msg import Pose
@@ -11,14 +12,34 @@ class MultiRobotSpawner(Node):
         def __init__(self):
                 super().__init__('multi_robot_spawner')
                 self.robots = []
-                self.robot_count = 3
-                self.config = {
-                        'robot_positions': [
-                                [0.0, 0.0, 0.15],
-                                [1.0, 0.0, 0.15],
-                                [0.0, 1.0, 0.15]
-                        ]
-                }
+
+                try:
+                        config_file = self.get_parameter('config_file').get_parameter_value().string_value
+                        package_dir = get_package_share_directory('multiple_robots_simulation')
+                        self.urdf_file = self.get_parameter('urdf_file').get_parameter_value().string_value
+
+                        config_path = os.path.join(package_dir, 'config', config_file)
+                        with open(config_path, 'r') as f:
+                                self.config = yaml.safe_load(f)
+                        self.get_logger().info(f'Loaded configuration from {config_path}')
+                except Exception as e:
+                        self.get_logger().warn(f'Could not load config file: {e}')
+                        self.config = {
+                                'robot_count': "3",
+                                'robot_positions': [
+                                        [0.0, 0.0, 0.0],
+                                        [1.0, 0.0, 0.0],
+                                        [0.0, 1.0, 0.0],
+                                        [1.0, 1.0, 0.0],
+                                        [-1.0, 0.0, 0.0],
+                                        [0.0, -1.0, 0.0],
+                                        [-1.0, -1.0, 0.0],
+                                        [1.0, -1.0, 0.0]
+                                ]
+                        }
+                        self.urdf_file = "box_bot.urdf"
+                
+                self.robot_count = min(int(self.config['robot_count']) , len(self.config['robot_positions']))
 
                 self.spawn_client = self.create_client(SpawnEntity, '/spawn_entity')
                 while not self.spawn_client.wait_for_service(timeout_sec=1.0):
@@ -28,7 +49,7 @@ class MultiRobotSpawner(Node):
 
         def spawn_robots(self):
                 package_dir = get_package_share_directory('multiple_robots_simulation')
-                urdf_path = os.path.join(package_dir, 'models', 'box_bot.urdf')
+                urdf_path = os.path.join(package_dir, 'models', self.urdf_file)
                 
                 for i in range(self.robot_count):
                         robot_name = f'tb_{i}'
@@ -78,7 +99,9 @@ class MultiRobotSpawner(Node):
                                 
                         if diff_drive_plugin is not None:
                                 ros_element = diff_drive_plugin.find('./ros')
-                                ros_element = ET.SubElement(diff_drive_plugin, 'ros')
+
+                                if ros_element is None:
+                                        ros_element = ET.SubElement(diff_drive_plugin, 'ros')
                                 
                                 # Add namespace element and tf remapping
                                 namespace_element = ET.SubElement(ros_element, 'namespace')
@@ -88,16 +111,20 @@ class MultiRobotSpawner(Node):
                                 
                                 # Update odometry frames
                                 odometry_frame = diff_drive_plugin.find('./odometry_frame')
-                                odometry_frame.text = robot_namespace + '/odom'
+                                if odometry_frame is not None:
+                                        odometry_frame.text = robot_namespace + '/odom'
                                 robot_base_frame = diff_drive_plugin.find('./robot_base_frame')
-                                robot_base_frame.text = robot_namespace + '/chassis'
+                                if robot_base_frame is not None:
+                                        robot_base_frame.text = robot_namespace + '/chassis'
                                 
                                 # Update topic names
                                 cmd_vel_topic = diff_drive_plugin.find('./cmd_vel_topic')
-                                cmd_vel_topic.text = robot_namespace + '/cmd_vel'
+                                if cmd_vel_topic is not None:
+                                        cmd_vel_topic.text = robot_namespace + '/cmd_vel'
                                 
                                 odometry_topic = diff_drive_plugin.find('./odometry_topic')
-                                odometry_topic.text = robot_namespace + '/odom'
+                                if odometry_topic is not None:
+                                        odometry_topic.text = robot_namespace + '/odom'
                         
                         if imu_plugin is not None:
                                 ros_element = imu_plugin.find('./ros')
