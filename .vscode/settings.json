@@ -10,7 +10,8 @@
     },
     "python.analysis.extraPaths": [
         "/opt/ros/humble/local/lib/python3.10/dist-packages",
-        "/opt/ros/humble/lib/python3.10/site-packages"
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "./src/multiple_robots_simulation/multiple_robots_simulation"
     ],
     // Autocomplete from ros python packages
     "python.autoComplete.extraPaths": [
