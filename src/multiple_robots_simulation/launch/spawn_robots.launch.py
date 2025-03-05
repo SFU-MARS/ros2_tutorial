@@ -33,6 +33,8 @@ def generate_launch_description():
             'urdf_file': urdf_file
         }]
     )
+
+
     
     return LaunchDescription([
         declare_config_file,

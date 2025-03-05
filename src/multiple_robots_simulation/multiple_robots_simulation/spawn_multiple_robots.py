@@ -149,7 +149,7 @@ class MultiRobotSpawner(Node):
 def main(args=None):
         rclpy.init(args=args)
         node = MultiRobotSpawner()
-        rclpy.spin(node)
+        node.get_logger().info("generate all the robot")
         node.destroy_node()
         rclpy.shutdown()
 
