@@ -28,6 +28,7 @@ setup(
     entry_points={
         'console_scripts': [
             "spawn_multiple_robots= multiple_robots_simulation.spawn_multiple_robots:main",
+            "bvc_controller= multiple_robots_simulation.bvc_controller:main",
         ],
     },
 )
