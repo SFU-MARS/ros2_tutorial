@@ -10,6 +10,7 @@ from geometry_msgs.msg import Twist
 
 from . import robot
 
+
 class BVCController(Node):
         def __init__(self):
                 super().__init__('bvc_controller')
@@ -58,8 +59,8 @@ class BVCController(Node):
                 self.odom_lock = threading.Lock()
                 self.odom_received = [False] * self.robot_count
 
-                self.initialized = False
                 self.robots_detected = False
+                self.initialized = False
 
                 self.odom_subscribers = []
                 #check the namespace of different robots
@@ -80,6 +81,9 @@ class BVCController(Node):
                                 10
                         )
                         self.velocity_pubs.append(pub)
+
+                self.goals_reached = [False] * self.robot_count
+                self.control_timer = None
 
                 self.detection_timer = self.create_timer(1.0, self.wait_for_robots)
 
@@ -105,7 +109,29 @@ class BVCController(Node):
                         self.get_logger().info(f'All {self.robot_count} robots detected!')
                         self.robots_detected = True
                         self.detection_timer.cancel()
+                        
+                        self.control_timer = self.create_timer(1.0/self.update_rate, self.control_loop)
 
+        def initialize_bvc_robots(self):
+                for i in range(self.robot_count):
+                # Set BVC with current position
+                        pos = self.positions[i]
+                        self.bvc_robots[i].set_bvc(pos, self.safety_radius, self.world_corners)
+                        self.bvc_robots[i].set_goal(self.goals[i])
+                
+                self.initialized = True
+                self.get_logger().info('BVC robots initialized with current positions')
+
+
+        def control_loop(self):
+                """Main control loop"""
+                if not self.robots_detected:
+                        return
+                
+                if not self.initialized:
+                        self.initialize_bvc_robots()
+                        return 
+                
 
 
 
