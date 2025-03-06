@@ -1,6 +1,6 @@
 import numpy as np
-import geo_helper
-import bvc
+from . import geo_helper
+from . import bvc
 import random
 import pdb
 

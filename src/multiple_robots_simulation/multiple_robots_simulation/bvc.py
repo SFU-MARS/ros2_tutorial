@@ -1,6 +1,5 @@
 import numpy as np
-import pdb # for debug
-import geo_helper
+from . import geo_helper
 
 
 #reference from: https://github.com/princeward/bvc/blob/master/src/bvc.py

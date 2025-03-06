@@ -6,6 +6,9 @@ import yaml
 import threading
 from ament_index_python.packages import get_package_share_directory
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Twist
+
+from . import robot
 
 class BVCController(Node):
         def __init__(self):
@@ -22,6 +25,7 @@ class BVCController(Node):
                 [-world_size, -world_size, world_size, world_size], 
                 [-world_size, world_size, world_size, -world_size]
                 ])
+
 
                 try:
                         package_dir = get_package_share_directory('multiple_robots_simulation')
@@ -46,11 +50,19 @@ class BVCController(Node):
                 self.positions = np.zeros((self.robot_count, 2))
                 self.velocities = np.zeros((self.robot_count, 2))
 
+                self.bvc_robots = []
+                for i in range(self.robot_count):
+                        r = robot.Robot(i)
+                        self.bvc_robots.append(r)
+
                 self.odom_lock = threading.Lock()
                 self.odom_received = [False] * self.robot_count
+
+                self.initialized = False
                 self.robots_detected = False
+
                 self.odom_subscribers = []
-                
+                #check the namespace of different robots
                 for i in range(self.robot_count):
                         sub = self.create_subscription(
                                 Odometry,
@@ -60,8 +72,17 @@ class BVCController(Node):
                         )
                         self.odom_subscribers.append(sub)
 
-                
+                self.velocity_pubs = []
+                for i in range(self.robot_count):
+                        pub = self.create_publisher(
+                                Twist, 
+                                f'/tb_{i}/cmd_vel', 
+                                10
+                        )
+                        self.velocity_pubs.append(pub)
+
                 self.detection_timer = self.create_timer(1.0, self.wait_for_robots)
+
 
         def odom_callback(self, msg, robot_idx):
                 with self.odom_lock:
