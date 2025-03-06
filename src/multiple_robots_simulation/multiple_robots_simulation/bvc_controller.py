@@ -4,6 +4,7 @@ import os
 import numpy as np
 import yaml
 import threading
+import math
 from ament_index_python.packages import get_package_share_directory
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
@@ -26,6 +27,9 @@ class BVCController(Node):
                 [-world_size, -world_size, world_size, world_size], 
                 [-world_size, world_size, world_size, -world_size]
                 ])
+
+                self.goal_tolerance = 0.2
+                self.angle_tolerance = 0.1
 
 
                 try:
@@ -50,6 +54,9 @@ class BVCController(Node):
                 # Initialize robot positions, velocities, and goals
                 self.positions = np.zeros((self.robot_count, 2))
                 self.velocities = np.zeros((self.robot_count, 2))
+
+                self.orientations = np.zeros(self.robot_count)
+                self.angular_velocities = np.zeros(self.robot_count)
 
                 self.bvc_robots = []
                 for i in range(self.robot_count):
@@ -92,6 +99,7 @@ class BVCController(Node):
                 with self.odom_lock:
                         self.positions[robot_idx, 0] = msg.pose.pose.position.x
                         self.positions[robot_idx, 1] = msg.pose.pose.position.y
+        
                         self.odom_received[robot_idx] = True
 
         def wait_for_robots(self):
@@ -122,6 +130,28 @@ class BVCController(Node):
                 self.initialized = True
                 self.get_logger().info('BVC robots initialized with current positions')
 
+        def update_bvc_cells(self):
+                for i in range(self.robot_count):
+                        if self.goals_reached[i]:
+                                continue
+                                
+                        other_robots_indices = [j for j in range(self.robot_count) if j != i]
+                        other_robots_positions = self.positions[other_robots_indices]
+                        
+                        # Update BVC cell
+                        own_pos = self.positions[i]
+                        self.bvc_robots[i].cell.update_bvc(
+                                own_pos.reshape(2, 1),
+                                other_robots_positions.T, 
+                                np.array(other_robots_indices)
+                        )
+                        
+                        # Update neighbor distances (for deadlock detection)
+                        self.bvc_robots[i].mem_nbr_dist(
+                                other_robots_positions.T,
+                                np.array(other_robots_indices)
+                        )
+
 
         def control_loop(self):
                 """Main control loop"""
@@ -131,6 +161,8 @@ class BVCController(Node):
                 if not self.initialized:
                         self.initialize_bvc_robots()
                         return 
+                
+                self.update_bvc_cells()
                 
 
 
