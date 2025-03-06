@@ -3,41 +3,89 @@ import rclpy
 import os
 import numpy as np
 import yaml
+import threading
 from ament_index_python.packages import get_package_share_directory
+from nav_msgs.msg import Odometry
 
 class BVCController(Node):
-    def __init__(self):
-        super().__init__('bvc_controller')
+        def __init__(self):
+                super().__init__('bvc_controller')
 
-        self.safety_radius = 0.3
-        self.max_linear_speed = 0.2
-        robot_config = "robot_config.yaml"
-        world_size = 15
-        self.max_angular_speed = 0.5
+                self.safety_radius = 0.3
+                self.max_linear_speed = 0.2
+                robot_config = "robot_config.yaml"
+                world_size = 15
+                self.max_angular_speed = 0.5
+                self.update_rate = 10
 
-        self.world_corners = np.array([
-            [-world_size, -world_size, world_size, world_size], 
-            [-world_size, world_size, world_size, -world_size]
-        ])
+                self.world_corners = np.array([
+                [-world_size, -world_size, world_size, world_size], 
+                [-world_size, world_size, world_size, -world_size]
+                ])
 
-        try:
-            package_dir = get_package_share_directory('multiple_robots_simulation')
-            config_path = os.path.join(package_dir, 'config', robot_config)
-            with open(config_path, 'r') as f:
-                config = yaml.safe_load(f)
-            self.get_logger().info(f'Loaded goals from {config_path}')
+                try:
+                        package_dir = get_package_share_directory('multiple_robots_simulation')
+                        config_path = os.path.join(package_dir, 'config', robot_config)
+                        with open(config_path, 'r') as f:
+                                config = yaml.safe_load(f)
+                        self.get_logger().info(f'Loaded goals from {config_path}')
 
-            self.robot_count = min(int(config['robot_count']) ,len(config['robot_positions']))
-            self.goals = config['robot_goals']
-                    
-        except Exception as e:
-            self.get_logger().warning(f'Could not load goals config: {e}')
-            # Use default goals if config file is not available
-            self.robot_count = 2
-            self.goals = np.array([
-                [3.0, 3.0],    
-                [-3.0, 3.0]  
-            ])
+                        self.robot_count = min(int(config['robot_count']) ,len(config['robot_positions']))
+                        self.goals = config['robot_goals']
+                                
+                except Exception as e:
+                        self.get_logger().warning(f'Could not load goals config: {e}')
+                        # Use default goals if config file is not available
+                        self.robot_count = 2
+                        self.goals = np.array([
+                                [3.0, 3.0],    
+                                [-3.0, 3.0]  
+                        ])
+
+                # Initialize robot positions, velocities, and goals
+                self.positions = np.zeros((self.robot_count, 2))
+                self.velocities = np.zeros((self.robot_count, 2))
+
+                self.odom_lock = threading.Lock()
+                self.odom_received = [False] * self.robot_count
+                self.robots_detected = False
+                self.odom_subscribers = []
+                
+                for i in range(self.robot_count):
+                        sub = self.create_subscription(
+                                Odometry,
+                                f'/tb_{i}/odom',
+                                lambda msg, idx=i: self.odom_callback(msg, idx),
+                                10
+                        )
+                        self.odom_subscribers.append(sub)
+
+                
+                self.detection_timer = self.create_timer(1.0, self.wait_for_robots)
+
+        def odom_callback(self, msg, robot_idx):
+                with self.odom_lock:
+                        self.positions[robot_idx, 0] = msg.pose.pose.position.x
+                        self.positions[robot_idx, 1] = msg.pose.pose.position.y
+                        self.odom_received[robot_idx] = True
+
+        def wait_for_robots(self):
+                if self.robots_detected:
+                        return
+            
+                with self.odom_lock:
+                        all_robots_found = all(self.odom_received)
+                        detected_count = sum(self.odom_received)
+        
+                # Report finding robot
+                if not all_robots_found:
+                        self.get_logger().info(f'Waiting for robots... ({detected_count}/{self.robot_count} detected)')
+                else:
+                        self.get_logger().info(f'All {self.robot_count} robots detected!')
+                        self.robots_detected = True
+                        self.detection_timer.cancel()
+
+
 
 
 def main(args=None):
