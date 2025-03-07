@@ -1,0 +1,6 @@
+planner_server:
+  ros__parameters:
+    planner_plugins: ["StraightLine"]
+    StraightLine:
+      plugin: nav2_straightline_planner::StraightLine
+      interpolation_resolution: 0.1  
