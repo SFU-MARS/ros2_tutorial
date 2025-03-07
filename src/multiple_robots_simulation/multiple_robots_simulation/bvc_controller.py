@@ -10,7 +10,7 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 
 from . import robot
-
+import tf_transformations
 
 class BVCController(Node):
         def __init__(self):
@@ -99,6 +99,11 @@ class BVCController(Node):
                 with self.odom_lock:
                         self.positions[robot_idx, 0] = msg.pose.pose.position.x
                         self.positions[robot_idx, 1] = msg.pose.pose.position.y
+
+                        orientation_q = msg.pose.pose.orientation
+                        orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+                        _, _, yaw = tf_transformations.euler_from_quaternion(orientation_list)
+                        self.orientations[robot_idx] = yaw
         
                         self.odom_received[robot_idx] = True
 
@@ -153,6 +158,87 @@ class BVCController(Node):
                         )
 
 
+        def update_bvc_cells(self):
+                for i in range(self.robot_count):
+                        if self.goals_reached[i]:
+                                continue
+                                
+                        other_robots_indices = [j for j in range(self.robot_count) if j != i]
+                        other_robots_positions = self.positions[other_robots_indices]
+                        
+                        # Update BVC cell
+                        own_pos = self.positions[i]
+                        self.bvc_robots[i].cell.update_bvc(
+                                own_pos.reshape(2, 1),
+                                other_robots_positions.T, 
+                                np.array(other_robots_indices)
+                        )
+
+                        self.bvc_robots[i].mem_nbr_dist(other_robots_positions.T,np.array(other_robots_indices))
+
+        def compute_velocities(self):
+                for i in range(self.robot_count):
+                        if self.goals_reached[i]:
+                                # Robot that are already at goal
+                                self.velocities[i] = np.zeros(2)
+                                self.angular_velocities[i] = 0.0
+                                continue
+                        
+                
+                        closest = self.bvc_robots[i].bvc_find_closest_to_goal()
+                
+                        if closest is None:
+                                self.get_logger().warning(f'No valid path found for robot_{i}')
+                                self.velocities[i] = np.zeros(2)
+                                self.angular_velocities[i] = 0.0
+                                continue
+                
+                
+                        closest = closest.reshape(2)
+                        current = self.positions[i]
+                        direction = closest - current
+                
+               
+                        distance_to_goal = np.linalg.norm(self.goals[i] - current)
+                        if distance_to_goal < self.goal_tolerance:
+                                self.get_logger().info(f'Robot_{i} reached its goal!')
+                                self.goals_reached[i] = True
+                                self.velocities[i] = np.zeros(2)
+                                self.angular_velocities[i] = 0.0
+                                continue
+                
+                        # Calculate desired heading angle
+                        desired_angle = math.atan2(direction[1], direction[0])
+                        current_angle = self.orientations[i]
+                        
+                        # Calculate the angle difference (taking into account the wrap around)
+                        angle_diff = self.normalize_angle(desired_angle - current_angle)
+                
+                        if abs(angle_diff) > self.angle_tolerance:
+                                self.velocities[i] = np.zeros(2)
+                        
+                                angular_vel = self.max_angular_speed * (angle_diff / math.pi)
+                                angular_vel = max(-self.max_angular_speed, min(self.max_angular_speed, angular_vel))
+                                self.angular_velocities[i] = angular_vel
+                        else:
+                                distance = np.linalg.norm(direction)
+                                if distance > 0.001: 
+                                        linear_vel = min(self.max_linear_speed, distance)
+                                        self.velocities[i] = np.array([linear_vel, 0.0])  
+                                        self.angular_velocities[i] = angle_diff * self.max_angular_speed
+                                else:
+                                        self.velocities[i] = np.zeros(2)
+                                        self.angular_velocities[i] = 0.0
+                                
+    
+        def normalize_angle(self, angle):
+                while angle > math.pi:
+                        angle -= 2.0 * math.pi
+                while angle < -math.pi:
+                        angle += 2.0 * math.pi
+                return angle
+    
+
         def control_loop(self):
                 """Main control loop"""
                 if not self.robots_detected:
@@ -163,6 +249,7 @@ class BVCController(Node):
                         return 
                 
                 self.update_bvc_cells()
+                self.compute_velocities()
                 
 
 
