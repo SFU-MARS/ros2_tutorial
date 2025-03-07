@@ -237,6 +237,21 @@ class BVCController(Node):
                 while angle < -math.pi:
                         angle += 2.0 * math.pi
                 return angle
+        
+        def publish_velocities(self):
+                for i in range(self.robot_count):
+                        msg = Twist()
+                        
+                        msg.linear.x = float(self.velocities[i][0])
+                        msg.linear.y = 0.0
+                        msg.linear.z = 0.0
+                        
+                        # Set the angular velocity for rotation
+                        msg.angular.x = 0.0
+                        msg.angular.y = 0.0
+                        msg.angular.z = float(self.angular_velocities[i])
+                        
+                        self.velocity_pubs[i].publish(msg)
     
 
         def control_loop(self):
@@ -250,6 +265,14 @@ class BVCController(Node):
                 
                 self.update_bvc_cells()
                 self.compute_velocities()
+
+                self.publish_velocities()
+
+                if all(self.goals_reached):
+                        self.get_logger().info('All robots have reached their goals!')
+                        if self.control_timer is not None:
+                                self.control_timer.cancel()
+                        self.create_timer(2.0,rclpy.shutdown)
                 
 
 
