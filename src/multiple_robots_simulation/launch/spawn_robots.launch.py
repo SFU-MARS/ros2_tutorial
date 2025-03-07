@@ -6,6 +6,8 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch.actions import  RegisterEventHandler
+from launch.event_handlers import OnProcessExit
 
 
 def generate_launch_description():
@@ -34,10 +36,36 @@ def generate_launch_description():
         }]
     )
 
+    bvc_controller = Node(
+        package='multiple_robots_simulation',
+        executable='bvc_controller',
+        name='bvc_controller',
+        output='screen',
+        parameters=[
+            {'safety_radius': 0.3},
+            {'update_rate': 5.0},
+            {'max_linear_speed': 0.2},
+            {'goal_tolerance': 0.2},
+            {'config_file': config_file},
+            {'world_size': 15.0},
+            {"max_angular_speed": 0.5},
+            {"angle_tolerance": 0.1}
+        ]
+    )
+
+    bvc_event = RegisterEventHandler(
+        event_handler= OnProcessExit(
+            target_action= robot_spawner,
+            on_exit=[bvc_controller]
+        )
+    )
+
+
 
     
     return LaunchDescription([
         declare_config_file,
         declare_urdf_file,
-        robot_spawner
+        robot_spawner,
+        bvc_event
     ])

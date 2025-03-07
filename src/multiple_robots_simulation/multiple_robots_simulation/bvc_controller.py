@@ -158,24 +158,6 @@ class BVCController(Node):
                         )
 
 
-        def update_bvc_cells(self):
-                for i in range(self.robot_count):
-                        if self.goals_reached[i]:
-                                continue
-                                
-                        other_robots_indices = [j for j in range(self.robot_count) if j != i]
-                        other_robots_positions = self.positions[other_robots_indices]
-                        
-                        # Update BVC cell
-                        own_pos = self.positions[i]
-                        self.bvc_robots[i].cell.update_bvc(
-                                own_pos.reshape(2, 1),
-                                other_robots_positions.T, 
-                                np.array(other_robots_indices)
-                        )
-
-                        self.bvc_robots[i].mem_nbr_dist(other_robots_positions.T,np.array(other_robots_indices))
-
         def compute_velocities(self):
                 for i in range(self.robot_count):
                         if self.goals_reached[i]:
