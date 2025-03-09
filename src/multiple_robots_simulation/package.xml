@@ -11,6 +11,10 @@
   <depend>rclpy</depend>
   <depend>ros2launch</depend>
 
+  <depend>turtlebot3_bringup</depend>
+  <depend>hls_lfcd_lds_driver</depend>
+  <depend>ld08_driver</depend>
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
