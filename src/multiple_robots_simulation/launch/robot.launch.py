@@ -40,7 +40,7 @@ def generate_launch_description():
     tb3_param_dir = LaunchConfiguration(
         'tb3_param_dir',
         default=os.path.join(
-            get_package_share_directory('turtlebot3_bringup'),
+            get_package_share_directory('multiple_robots_simulation'),
             'param',
             TURTLEBOT3_MODEL + '.yaml'))
 
@@ -95,7 +95,7 @@ def generate_launch_description():
         Node(
             package='turtlebot3_node',
             executable='turtlebot3_ros',
-            node_namespace = namespace,
+            node_namespace = 'tb_0',
             parameters=[tb3_param_dir],
             arguments=['-i', usb_port],
             output='screen'),
