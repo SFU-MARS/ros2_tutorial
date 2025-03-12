@@ -30,8 +30,6 @@ from launch.substitutions import ThisLaunchFileDir
 
 def generate_launch_description():
     TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
-    LDS_MODEL = os.environ['LDS_MODEL']
-    LDS_LAUNCH_FILE = '/hlds_laser.launch.py'
 
     # Add namespace configuration
     namespace = LaunchConfiguration('namespace', default='')
@@ -82,7 +80,7 @@ def generate_launch_description():
         Node(
             package='turtlebot3_node',
             executable='turtlebot3_ros',
-            node_namespace = 'tb_0',
+            namespace = 'tb_0',
             parameters=[tb3_param_dir],
             arguments=['-i', usb_port],
             output='screen'),
