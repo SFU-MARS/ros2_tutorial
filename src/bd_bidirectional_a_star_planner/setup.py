@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'bi_astar = bd_bidirectional_a_star_planner.bi_astar:main',
+            'bi_astar = bd_bidirectional_a_star_planner.global_planner_node:main',
         ],
     },
 )

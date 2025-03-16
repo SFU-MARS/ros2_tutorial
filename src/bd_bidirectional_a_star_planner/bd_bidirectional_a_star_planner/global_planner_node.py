@@ -4,7 +4,7 @@ from rclpy.node import Node
 class BiAStar(Node):
     def __init__(self):
         super().__init__("bi_astar")
-        self.get_logger().info("global planner node initialized")
+        self.get_logger().info("BiAStar node initialized")
       
         
 def main():
