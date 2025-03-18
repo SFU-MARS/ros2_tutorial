@@ -6,7 +6,8 @@
     "files.associations": {
         "*.repos": "yaml",
         "*.world": "xml",
-        "*.xacro": "xml"
+        "*.xacro": "xml",
+        "functional": "cpp"
     },
     "python.analysis.extraPaths": [
         "/opt/ros/humble/local/lib/python3.10/dist-packages",
