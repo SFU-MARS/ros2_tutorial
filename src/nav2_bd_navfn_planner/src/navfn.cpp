@@ -414,6 +414,26 @@ NavFn::initCost(int k, float v)
   push_cur(k + nx);
 }
 
+// BD: Initialize cost for bidirectional search
+void NavFn::initCostBD(int k, float v, float* pot_array) 
+{
+  pot_array[k] = v;
+  
+  // Similar to push_cur but for bidirectional search
+  if (k + 1 < ns && costarr[k + 1] < COST_OBS) {
+    pot_array[k + 1] = POT_HIGH;
+  }
+  if (k - 1 >= 0 && costarr[k - 1] < COST_OBS) {
+    pot_array[k - 1] = POT_HIGH;
+  }
+  if (k + nx < ns && costarr[k + nx] < COST_OBS) {
+    pot_array[k + nx] = POT_HIGH;
+  }
+  if (k - nx >= 0 && costarr[k - nx] < COST_OBS) {
+    pot_array[k - nx] = POT_HIGH;
+  }
+}
+
 
 //
 // Critical function: calculate updated potential value of a cell,
@@ -1062,11 +1082,11 @@ bool NavFn::calcBidirectionalAstar()
   
   // Initialize start side
   int start_cell = start[1] * nx + start[0];
-  initCost(start_cell, 0, potarr_start);
+  initCostBD(start_cell, 0, potarr_start);
   
   // Initialize goal side  
   int goal_cell = goal[1] * nx + goal[0];
-  initCost(goal_cell, 0, potarr_goal);
+  initCostBD(goal_cell, 0, potarr_goal);
 
   while (!meetingPointFound()) {
     // Expand from start
@@ -1087,26 +1107,35 @@ bool NavFn::calcBidirectionalAstar()
 // BD
 void NavFn::expandFromStart(int cell) {
   // Implementation of forward A* expansion
+  cell++;
+  return;
 }
 
 // BD
 void NavFn::expandFromGoal(int cell) {
   // Implementation of backward A* expansion
+  cell++;
+  return;
 }
 
 // BD
 bool NavFn::meetingPointFound() {
   // Check if the two searches have met
+  return false;
+
 }
 
 // BD
 bool NavFn::checkMeetingPoint() {
   // Find and validate meeting point
+  return false;
+
 }
 
 // BD
 bool NavFn::reconstructPath() {
   // Reconstruct path from meeting point to start and goal
+  return false;
 }
 
 }  // namespace nav2_navfn_planner

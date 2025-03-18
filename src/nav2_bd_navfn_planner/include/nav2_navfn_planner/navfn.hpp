@@ -297,6 +297,7 @@ public:
   bool meetingPointFound();
   bool checkMeetingPoint();
   bool reconstructPath();
+  void initCostBD(int k, float v, float* pot_array);  // BD: New init function for bidirectional search
 };
 
 }  // namespace nav2_navfn_planner
