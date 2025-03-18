@@ -281,6 +281,22 @@ public:
   /** save costmap */
   /**< write out costmap and start/goal states as fname.pgm and fname.txt */
   // void savemap(const char * fname);
+
+  // BD New members for bidirectional A*
+  float* potarr_start;    // potential array from start
+  float* potarr_goal;     // potential array from goal
+  bool* pending_start;    // pending flags for start expansion
+  bool* pending_goal;     // pending flags for goal expansion
+  int* pb_start;         // priority buffer for start expansion
+  int* pb_goal;         // priority buffer for goal expansion
+  int meeting_point;     // where the two searches meet
+  
+  // BD New helper methods
+  void expandFromStart(int cell);
+  void expandFromGoal(int cell);
+  bool meetingPointFound();
+  bool checkMeetingPoint();
+  bool reconstructPath();
 };
 
 }  // namespace nav2_navfn_planner

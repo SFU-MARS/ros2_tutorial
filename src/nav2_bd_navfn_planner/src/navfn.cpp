@@ -173,6 +173,14 @@ NavFn::~NavFn()
   if (pb3) {
     delete[] pb3;
   }
+  
+  // BD
+  if (potarr_start) delete[] potarr_start;
+  if (potarr_goal) delete[] potarr_goal;
+  if (pending_start) delete[] pending_start;
+  if (pending_goal) delete[] pending_goal;
+  if (pb_start) delete[] pb_start;
+  if (pb_goal) delete[] pb_goal;
 }
 
 
@@ -1032,31 +1040,73 @@ NavFn::gradCell(int n)
 // BD
 bool NavFn::calcBidirectionalAstar() 
 {
-  // // Initialize two priority queues - one from start, one from goal
-  // setupNavFn(true);
+  setupNavFn(true);
   
-  // // Initialize start side
-  // int start_cell = start[1] * nx + start[0];
-  // initCost(start_cell, 0, potarr_start);
+  // Initialize arrays if not already done
+  if (!potarr_start) {
+    potarr_start = new float[ns];
+    potarr_goal = new float[ns];
+    pending_start = new bool[ns];
+    pending_goal = new bool[ns];
+    pb_start = new int[PRIORITYBUFSIZE];
+    pb_goal = new int[PRIORITYBUFSIZE];
+  }
   
-  // // Initialize goal side  
-  // int goal_cell = goal[1] * nx + goal[0];
-  // initCost(goal_cell, 0, potarr_goal);
+  // Reset arrays
+  for (int i = 0; i < ns; i++) {
+    potarr_start[i] = POT_HIGH;
+    potarr_goal[i] = POT_HIGH;
+    pending_start[i] = false;
+    pending_goal[i] = false;
+  }
+  
+  // Initialize start side
+  int start_cell = start[1] * nx + start[0];
+  initCost(start_cell, 0, potarr_start);
+  
+  // Initialize goal side  
+  int goal_cell = goal[1] * nx + goal[0];
+  initCost(goal_cell, 0, potarr_goal);
 
-  // while (!meetingPointFound()) {
-  //   // Expand from start
-  //   expandFromStart();
+  while (!meetingPointFound()) {
+    // Expand from start
+    expandFromStart(start_cell);
     
-  //   // Expand from goal
-  //   expandFromGoal();
+    // Expand from goal
+    expandFromGoal(goal_cell);
     
-  //   // Check if paths have met
-  //   if (checkMeetingPoint()) {
-  //     return reconstructPath();
-  //   }
-  // }
+    // Check if paths have met
+    if (checkMeetingPoint()) {
+      return reconstructPath();
+    }
+  }
   
   return false;
+}
+
+// BD
+void NavFn::expandFromStart(int cell) {
+  // Implementation of forward A* expansion
+}
+
+// BD
+void NavFn::expandFromGoal(int cell) {
+  // Implementation of backward A* expansion
+}
+
+// BD
+bool NavFn::meetingPointFound() {
+  // Check if the two searches have met
+}
+
+// BD
+bool NavFn::checkMeetingPoint() {
+  // Find and validate meeting point
+}
+
+// BD
+bool NavFn::reconstructPath() {
+  // Reconstruct path from meeting point to start and goal
 }
 
 }  // namespace nav2_navfn_planner
