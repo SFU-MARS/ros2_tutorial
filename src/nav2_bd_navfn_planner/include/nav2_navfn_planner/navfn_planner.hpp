@@ -215,6 +215,9 @@ protected:
   // Whether to use the astar planner or default dijkstras
   bool use_astar_;
 
+  // Whether to use the bidir astar planner
+  bool use_bidirectional_astar_;
+
   // parent node weak ptr
   rclcpp_lifecycle::LifecycleNode::WeakPtr node_;
 

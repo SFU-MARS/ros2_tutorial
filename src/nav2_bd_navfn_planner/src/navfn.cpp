@@ -1029,4 +1029,34 @@ NavFn::gradCell(int n)
 //   fclose(fp);
 // }
 
+// BD
+bool NavFn::calcBidirectionalAstar() 
+{
+  // // Initialize two priority queues - one from start, one from goal
+  // setupNavFn(true);
+  
+  // // Initialize start side
+  // int start_cell = start[1] * nx + start[0];
+  // initCost(start_cell, 0, potarr_start);
+  
+  // // Initialize goal side  
+  // int goal_cell = goal[1] * nx + goal[0];
+  // initCost(goal_cell, 0, potarr_goal);
+
+  // while (!meetingPointFound()) {
+  //   // Expand from start
+  //   expandFromStart();
+    
+  //   // Expand from goal
+  //   expandFromGoal();
+    
+  //   // Check if paths have met
+  //   if (checkMeetingPoint()) {
+  //     return reconstructPath();
+  //   }
+  // }
+  
+  return false;
+}
+
 }  // namespace nav2_navfn_planner

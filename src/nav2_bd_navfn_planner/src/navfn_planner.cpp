@@ -90,6 +90,10 @@ NavfnPlanner::configure(
   declare_parameter_if_not_declared(
     node, name + ".use_final_approach_orientation", rclcpp::ParameterValue(false));
   node->get_parameter(name + ".use_final_approach_orientation", use_final_approach_orientation_);
+  // BD
+  declare_parameter_if_not_declared(
+    node, name + ".use_bidirectional_astar", rclcpp::ParameterValue(false));
+  node->get_parameter(name + ".use_bidirectional_astar", use_bidirectional_astar_);
 
   // Create a planner based on the new costmap size
   planner_ = std::make_unique<NavFn>(
@@ -263,7 +267,10 @@ NavfnPlanner::makePlan(
 
   planner_->setStart(map_goal);
   planner_->setGoal(map_start);
-  if (use_astar_) {
+  // BD
+  if (use_bidirectional_astar_) {
+    planner_->calcBidirectionalAstar();
+  } else if (use_astar_) {
     planner_->calcNavFnAstar();
   } else {
     planner_->calcNavFnDijkstra(true);
@@ -538,6 +545,9 @@ NavfnPlanner::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameter
         allow_unknown_ = parameter.as_bool();
       } else if (name == name_ + ".use_final_approach_orientation") {
         use_final_approach_orientation_ = parameter.as_bool();
+        // BD
+      } else if (name == name_ + ".use_bidirectional_astar") {
+        use_bidirectional_astar_ = parameter.as_bool();
       }
     }
   }

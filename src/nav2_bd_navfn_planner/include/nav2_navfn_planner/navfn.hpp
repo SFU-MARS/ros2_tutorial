@@ -134,6 +134,12 @@ public:
    * @return True if a plan is found, false otherwise
    */
   bool calcNavFnAstar();
+  
+  /**
+   * @brief  BD TODO
+   * @return True if a plan is found, false otherwise
+   */
+  bool calcBidirectionalAstar();
 
   /**
    * @brief Caclulates the full navigation function using Dijkstra
