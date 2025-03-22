@@ -21,7 +21,7 @@
 
 // #define BENCHMARK_TESTING
 
-#include "nav2_navfn_planner/navfn_planner.hpp"
+#include "nav2_bd_navfn_planner/navfn_planner.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -33,7 +33,7 @@
 #include <vector>
 
 #include "builtin_interfaces/msg/duration.hpp"
-#include "nav2_navfn_planner/navfn.hpp"
+#include "nav2_bd_navfn_planner/navfn.hpp"
 #include "nav2_util/costmap.hpp"
 #include "nav2_util/node_utils.hpp"
 #include "nav2_costmap_2d/cost_values.hpp"
@@ -44,7 +44,7 @@ using nav2_util::declare_parameter_if_not_declared;
 using rcl_interfaces::msg::ParameterType;
 using std::placeholders::_1;
 
-namespace nav2_navfn_planner
+namespace nav2_bd_navfn_planner
 {
 
 NavfnPlanner::NavfnPlanner()
@@ -555,7 +555,7 @@ NavfnPlanner::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameter
   return result;
 }
 
-}  // namespace nav2_navfn_planner
+}  // namespace nav2_bd_navfn_planner
 
 #include "pluginlib/class_list_macros.hpp"
-PLUGINLIB_EXPORT_CLASS(nav2_navfn_planner::NavfnPlanner, nav2_core::GlobalPlanner)
+PLUGINLIB_EXPORT_CLASS(nav2_bd_navfn_planner::NavfnPlanner, nav2_core::GlobalPlanner)

@@ -36,15 +36,15 @@
 // Modified for Euclidean-distance computation
 //
 
-#ifndef NAV2_NAVFN_PLANNER__NAVFN_HPP_
-#define NAV2_NAVFN_PLANNER__NAVFN_HPP_
+#ifndef NAV2_BD_NAVFN_PLANNER__NAVFN_HPP_
+#define NAV2_BD_NAVFN_PLANNER__NAVFN_HPP_
 
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 
-namespace nav2_navfn_planner
+namespace nav2_bd_navfn_planner
 {
 
 // cost defs
@@ -134,9 +134,9 @@ public:
    * @return True if a plan is found, false otherwise
    */
   bool calcNavFnAstar();
-  
+
   /**
-   * @brief  BD TODO
+   * @brief  Calculates a plan using the Bidirectional A* heuristic
    * @return True if a plan is found, false otherwise
    */
   bool calcBidirectionalAstar();
@@ -281,25 +281,8 @@ public:
   /** save costmap */
   /**< write out costmap and start/goal states as fname.pgm and fname.txt */
   // void savemap(const char * fname);
-
-  // BD New members for bidirectional A*
-  float* potarr_start;    // potential array from start
-  float* potarr_goal;     // potential array from goal
-  bool* pending_start;    // pending flags for start expansion
-  bool* pending_goal;     // pending flags for goal expansion
-  int* pb_start;         // priority buffer for start expansion
-  int* pb_goal;         // priority buffer for goal expansion
-  int meeting_point;     // where the two searches meet
-  
-  // BD New helper methods
-  void expandFromStart(int cell);
-  void expandFromGoal(int cell);
-  bool meetingPointFound();
-  bool checkMeetingPoint();
-  bool reconstructPath();
-  void initCostBD(int k, float v, float* pot_array);  // BD: New init function for bidirectional search
 };
 
-}  // namespace nav2_navfn_planner
+}  // namespace nav2_bd_navfn_planner
 
-#endif  // NAV2_NAVFN_PLANNER__NAVFN_HPP_
+#endif  // NAV2_BD_NAVFN_PLANNER__NAVFN_HPP_

@@ -24,7 +24,7 @@ include_directories(
   include
 )
 
-set(library_name nav2_navfn_planner)
+set(library_name nav2_bd_navfn_planner)
 
 set(dependencies
   rclcpp

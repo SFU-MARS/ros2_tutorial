@@ -20,7 +20,7 @@
 
 #include "gtest/gtest.h"
 #include "nav2_util/lifecycle_node.hpp"
-#include "nav2_navfn_planner/navfn_planner.hpp"
+#include "nav2_bd_navfn_planner/navfn_planner.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 class RclCppFixture
@@ -37,7 +37,7 @@ TEST(NavfnTest, testDynamicParameter)
   auto costmap = std::make_shared<nav2_costmap_2d::Costmap2DROS>("global_costmap");
   costmap->on_configure(rclcpp_lifecycle::State());
   auto planner =
-    std::make_unique<nav2_navfn_planner::NavfnPlanner>();
+    std::make_unique<nav2_bd_navfn_planner::NavfnPlanner>();
   auto tf = std::make_shared<tf2_ros::Buffer>(node->get_clock());
   planner->configure(node, "test", tf, costmap);
   planner->activate();
@@ -51,7 +51,8 @@ TEST(NavfnTest, testDynamicParameter)
     {rclcpp::Parameter("test.tolerance", 1.0),
       rclcpp::Parameter("test.use_astar", true),
       rclcpp::Parameter("test.allow_unknown", true),
-      rclcpp::Parameter("test.use_final_approach_orientation", true)});
+      rclcpp::Parameter("test.use_final_approach_orientation", true),
+      rclcpp::Parameter("test.use_bidirectional_astar", true)});
 
   rclcpp::spin_until_future_complete(
     node->get_node_base_interface(),
@@ -61,4 +62,5 @@ TEST(NavfnTest, testDynamicParameter)
   EXPECT_EQ(node->get_parameter("test.use_astar").as_bool(), true);
   EXPECT_EQ(node->get_parameter("test.allow_unknown").as_bool(), true);
   EXPECT_EQ(node->get_parameter("test.use_final_approach_orientation").as_bool(), true);
+  EXPECT_EQ(node->get_parameter("test.use_bidirectional_astar").as_bool(), true);
 }

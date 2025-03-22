@@ -41,12 +41,12 @@
 // Path calc has sanity check that it succeeded
 //
 
-#include "nav2_navfn_planner/navfn.hpp"
+#include "nav2_bd_navfn_planner/navfn.hpp"
 
 #include <algorithm>
 #include "rclcpp/rclcpp.hpp"
 
-namespace nav2_navfn_planner
+namespace nav2_bd_navfn_planner
 {
 
 //
@@ -173,14 +173,6 @@ NavFn::~NavFn()
   if (pb3) {
     delete[] pb3;
   }
-  
-  // BD
-  if (potarr_start) delete[] potarr_start;
-  if (potarr_goal) delete[] potarr_goal;
-  if (pending_start) delete[] pending_start;
-  if (pending_goal) delete[] pending_goal;
-  if (pb_start) delete[] pb_start;
-  if (pb_goal) delete[] pb_goal;
 }
 
 
@@ -412,26 +404,6 @@ NavFn::initCost(int k, float v)
   push_cur(k - 1);
   push_cur(k - nx);
   push_cur(k + nx);
-}
-
-// BD: Initialize cost for bidirectional search
-void NavFn::initCostBD(int k, float v, float* pot_array) 
-{
-  pot_array[k] = v;
-  
-  // Similar to push_cur but for bidirectional search
-  if (k + 1 < ns && costarr[k + 1] < COST_OBS) {
-    pot_array[k + 1] = POT_HIGH;
-  }
-  if (k - 1 >= 0 && costarr[k - 1] < COST_OBS) {
-    pot_array[k - 1] = POT_HIGH;
-  }
-  if (k + nx < ns && costarr[k + nx] < COST_OBS) {
-    pot_array[k + nx] = POT_HIGH;
-  }
-  if (k - nx >= 0 && costarr[k - nx] < COST_OBS) {
-    pot_array[k - nx] = POT_HIGH;
-  }
 }
 
 
@@ -1057,85 +1029,10 @@ NavFn::gradCell(int n)
 //   fclose(fp);
 // }
 
-// BD
-bool NavFn::calcBidirectionalAstar() 
+bool NavFn::calcBidirectionalAstar()
 {
-  setupNavFn(true);
-  
-  // Initialize arrays if not already done
-  if (!potarr_start) {
-    potarr_start = new float[ns];
-    potarr_goal = new float[ns];
-    pending_start = new bool[ns];
-    pending_goal = new bool[ns];
-    pb_start = new int[PRIORITYBUFSIZE];
-    pb_goal = new int[PRIORITYBUFSIZE];
-  }
-  
-  // Reset arrays
-  for (int i = 0; i < ns; i++) {
-    potarr_start[i] = POT_HIGH;
-    potarr_goal[i] = POT_HIGH;
-    pending_start[i] = false;
-    pending_goal[i] = false;
-  }
-  
-  // Initialize start side
-  int start_cell = start[1] * nx + start[0];
-  initCostBD(start_cell, 0, potarr_start);
-  
-  // Initialize goal side  
-  int goal_cell = goal[1] * nx + goal[0];
-  initCostBD(goal_cell, 0, potarr_goal);
-
-  while (!meetingPointFound()) {
-    // Expand from start
-    expandFromStart(start_cell);
-    
-    // Expand from goal
-    expandFromGoal(goal_cell);
-    
-    // Check if paths have met
-    if (checkMeetingPoint()) {
-      return reconstructPath();
-    }
-  }
-  
+  // TODO: Implement bidirectional A* algorithm
   return false;
 }
 
-// BD
-void NavFn::expandFromStart(int cell) {
-  // Implementation of forward A* expansion
-  cell++;
-  return;
-}
-
-// BD
-void NavFn::expandFromGoal(int cell) {
-  // Implementation of backward A* expansion
-  cell++;
-  return;
-}
-
-// BD
-bool NavFn::meetingPointFound() {
-  // Check if the two searches have met
-  return false;
-
-}
-
-// BD
-bool NavFn::checkMeetingPoint() {
-  // Find and validate meeting point
-  return false;
-
-}
-
-// BD
-bool NavFn::reconstructPath() {
-  // Reconstruct path from meeting point to start and goal
-  return false;
-}
-
-}  // namespace nav2_navfn_planner
+}  // namespace nav2_bd_navfn_planner
