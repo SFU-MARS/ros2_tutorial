@@ -2,14 +2,19 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>nav2_bd_navfn_planner</name>
-  <version>1.1.18</version>
-  <description>TODO</description>
+  <version>1.2.0</version>
+  <description>NAVFN PLANNER WITH A BIDIRECTIONAL A* IMPLEMENTATION</description>
+
   <maintainer email="stevenmacenski@gmail.com">Steve Macenski</maintainer>
   <maintainer email="carlos.a.orduno@intel.com">Carlos Orduno</maintainer>
+  <maintainer email="bsa74@sfu.ca">Babanpreet Singh</maintainer>
+  <maintainer email="dongweih@sfu.ca">Dongwei Han</maintainer>
+
   <license>Apache-2.0</license>
   <license>BSD-3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
 
   <depend>rclcpp</depend>
   <depend>rclcpp_action</depend>
