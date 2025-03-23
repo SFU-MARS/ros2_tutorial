@@ -1055,8 +1055,15 @@ NavFn::gradCell(int n)
 
 bool NavFn::calcBidirectionalAstar()
 {
-  // TODO: Implement bidirectional A* algorithm
-  return false;
+  setupBiDirNavFn();
+
+  RCLCPP_DEBUG(
+    rclcpp::get_logger("rclcpp"),
+    "[NavFn] Calculating BiDirectional A* path from (%d,%d) to (%d,%d)",
+    start[0], start[1], goal[0], goal[1]);
+
+  // Set up navigation function and run bidirectional A*
+  return propBidirectionalAstar(nx * ny * 2);
 }
 
 void
@@ -1146,7 +1153,7 @@ NavFn::updateCellBiDirAstar(int n, bool forward)
   if (x > 0) {  // left
     int nn = n - 1;
     tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
-    if (tc >= 0 && g_current[n] + tc < g_current[nn]) {
+    if (tc >= 0 && costarr[nn] < COST_OBS && g_current[n] + tc < g_current[nn]) {
       g_current[nn] = g_current[n] + tc;
       potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
       pending_current[nn] = true;
@@ -1156,7 +1163,7 @@ NavFn::updateCellBiDirAstar(int n, bool forward)
   if (x < nx - 1) {  // right
     int nn = n + 1;
     tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
-    if (tc >= 0 && g_current[n] + tc < g_current[nn]) {
+    if (tc >= 0 && costarr[nn] < COST_OBS && g_current[n] + tc < g_current[nn]) {
       g_current[nn] = g_current[n] + tc;
       potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
       pending_current[nn] = true;
@@ -1166,7 +1173,7 @@ NavFn::updateCellBiDirAstar(int n, bool forward)
   if (y > 0) {  // up
     int nn = n - nx;
     tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
-    if (tc >= 0 && g_current[n] + tc < g_current[nn]) {
+    if (tc >= 0 && costarr[nn] < COST_OBS && g_current[n] + tc < g_current[nn]) {
       g_current[nn] = g_current[n] + tc;
       potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
       pending_current[nn] = true;
@@ -1176,7 +1183,7 @@ NavFn::updateCellBiDirAstar(int n, bool forward)
   if (y < ny - 1) {  // down
     int nn = n + nx;
     tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
-    if (tc >= 0 && g_current[n] + tc < g_current[nn]) {
+    if (tc >= 0 && costarr[nn] < COST_OBS && g_current[n] + tc < g_current[nn]) {
       g_current[nn] = g_current[n] + tc;
       potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
       pending_current[nn] = true;
