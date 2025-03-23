@@ -1152,41 +1152,49 @@ NavFn::updateCellBiDirAstar(int n, bool forward)
   // Check four neighbors
   if (x > 0) {  // left
     int nn = n - 1;
-    tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
-    if (tc >= 0 && costarr[nn] < COST_OBS && g_current[n] + tc < g_current[nn]) {
-      g_current[nn] = g_current[n] + tc;
-      potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
-      pending_current[nn] = true;
+    if (costarr[nn] < COST_OBS) {  // Only process if not an obstacle
+      tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
+      if (tc >= 0 && g_current[n] + tc < g_current[nn]) {
+        g_current[nn] = g_current[n] + tc;
+        potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
+        pending_current[nn] = true;
+      }
     }
   }
 
   if (x < nx - 1) {  // right
     int nn = n + 1;
-    tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
-    if (tc >= 0 && costarr[nn] < COST_OBS && g_current[n] + tc < g_current[nn]) {
-      g_current[nn] = g_current[n] + tc;
-      potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
-      pending_current[nn] = true;
+    if (costarr[nn] < COST_OBS) {  // Only process if not an obstacle
+      tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
+      if (tc >= 0 && g_current[n] + tc < g_current[nn]) {
+        g_current[nn] = g_current[n] + tc;
+        potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
+        pending_current[nn] = true;
+      }
     }
   }
 
   if (y > 0) {  // up
     int nn = n - nx;
-    tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
-    if (tc >= 0 && costarr[nn] < COST_OBS && g_current[n] + tc < g_current[nn]) {
-      g_current[nn] = g_current[n] + tc;
-      potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
-      pending_current[nn] = true;
+    if (costarr[nn] < COST_OBS) {  // Only process if not an obstacle
+      tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
+      if (tc >= 0 && g_current[n] + tc < g_current[nn]) {
+        g_current[nn] = g_current[n] + tc;
+        potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
+        pending_current[nn] = true;
+      }
     }
   }
 
   if (y < ny - 1) {  // down
     int nn = n + nx;
-    tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
-    if (tc >= 0 && costarr[nn] < COST_OBS && g_current[n] + tc < g_current[nn]) {
-      g_current[nn] = g_current[n] + tc;
-      potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
-      pending_current[nn] = true;
+    if (costarr[nn] < COST_OBS) {  // Only process if not an obstacle
+      tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
+      if (tc >= 0 && g_current[n] + tc < g_current[nn]) {
+        g_current[nn] = g_current[n] + tc;
+        potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
+        pending_current[nn] = true;
+      }
     }
   }
 
@@ -1199,9 +1207,6 @@ NavFn::propBidirectionalAstar(int cycles)
 {
   int cycle = 0;  // which cycle we're on
 
-  // Set up initial conditions
-  setupBiDirNavFn();
-
   // Main loop
   while (cycle < cycles) {
     // Forward search
@@ -1213,6 +1218,13 @@ NavFn::propBidirectionalAstar(int cycles)
         min_pos = i;
       }
     }
+    
+    if (min_pos < 0 && min_pos >= 0) {
+      // No path found - both searches are exhausted
+      RCLCPP_DEBUG(rclcpp::get_logger("rclcpp"), "[NavFn] BiA*: Both searches exhausted, no path found");
+      return false;
+    }
+    
     if (min_pos >= 0) {
       updateCellBiDirAstar(min_pos, true);
       // Check if this node is in the reverse closed set
@@ -1221,7 +1233,7 @@ NavFn::propBidirectionalAstar(int cycles)
         float best_cost = POT_HIGH;
         int best_meet = -1;
         // Find the best meeting point
-        for (int i : closedF) {
+        for (const int& i : closedF) {
           if (closedR.find(i) != closedR.end()) {
             float total_cost = gF[i] + gR[i];
             if (total_cost < best_cost) {
@@ -1232,19 +1244,190 @@ NavFn::propBidirectionalAstar(int cycles)
         }
         // Update potarr for path reconstruction
         if (best_meet >= 0) {
+          RCLCPP_DEBUG(
+            rclcpp::get_logger("rclcpp"),
+            "[NavFn] BiA*: Path found with cost %f at meeting point (%d,%d)",
+            best_cost, best_meet % nx, best_meet / nx);
+            
+          // Set standard potarr to high values
           for (int i = 0; i < ns; i++) {
             potarr[i] = POT_HIGH;
           }
-          // Forward part
-          for (int i : closedF) {
-            potarr[i] = gF[i];
+          
+          // Start at goal (remember the nav function goes backward from goal to start)
+          int goalCell = goal[1] * nx + goal[0];
+          potarr[goalCell] = 0;
+          
+          // Trace backward path from meeting point to goal using gR
+          std::vector<int> pathR;
+          int current = best_meet;
+          pathR.push_back(current);
+          
+          while (current != goalCell && !closedR.empty()) {
+            int next_cell = -1;
+            float min_g = POT_HIGH;
+            
+            // Check four neighbors to find the one with lowest gR
+            int x = current % nx;
+            int y = current / nx;
+            
+            // Check left
+            if (x > 0) {
+              int n = current - 1;
+              if (closedR.find(n) != closedR.end() && gR[n] < min_g) {
+                min_g = gR[n];
+                next_cell = n;
+              }
+            }
+            
+            // Check right
+            if (x < nx - 1) {
+              int n = current + 1;
+              if (closedR.find(n) != closedR.end() && gR[n] < min_g) {
+                min_g = gR[n];
+                next_cell = n;
+              }
+            }
+            
+            // Check up
+            if (y > 0) {
+              int n = current - nx;
+              if (closedR.find(n) != closedR.end() && gR[n] < min_g) {
+                min_g = gR[n];
+                next_cell = n;
+              }
+            }
+            
+            // Check down
+            if (y < ny - 1) {
+              int n = current + nx;
+              if (closedR.find(n) != closedR.end() && gR[n] < min_g) {
+                min_g = gR[n];
+                next_cell = n;
+              }
+            }
+            
+            if (next_cell == -1 || next_cell == current) {
+              break; // No progress or stuck
+            }
+            
+            current = next_cell;
+            pathR.push_back(current);
           }
-          // Reverse part (use lower cost when cells overlap)
-          for (int i : closedR) {
-            if (potarr[i] > gR[i]) {
-              potarr[i] = gR[i];
+          
+          // Trace forward path from start to meeting point using gF
+          std::vector<int> pathF;
+          current = best_meet;
+          
+          while (current != (start[1] * nx + start[0]) && !closedF.empty()) {
+            int next_cell = -1;
+            float min_g = POT_HIGH;
+            
+            // Check four neighbors to find the one with lowest gF
+            int x = current % nx;
+            int y = current / nx;
+            
+            // Check left
+            if (x > 0) {
+              int n = current - 1;
+              if (closedF.find(n) != closedF.end() && gF[n] < min_g) {
+                min_g = gF[n];
+                next_cell = n;
+              }
+            }
+            
+            // Check right
+            if (x < nx - 1) {
+              int n = current + 1;
+              if (closedF.find(n) != closedF.end() && gF[n] < min_g) {
+                min_g = gF[n];
+                next_cell = n;
+              }
+            }
+            
+            // Check up
+            if (y > 0) {
+              int n = current - nx;
+              if (closedF.find(n) != closedF.end() && gF[n] < min_g) {
+                min_g = gF[n];
+                next_cell = n;
+              }
+            }
+            
+            // Check down
+            if (y < ny - 1) {
+              int n = current + nx;
+              if (closedF.find(n) != closedF.end() && gF[n] < min_g) {
+                min_g = gF[n];
+                next_cell = n;
+              }
+            }
+            
+            if (next_cell == -1 || next_cell == current) {
+              break; // No progress or stuck
+            }
+            
+            current = next_cell;
+            pathF.push_back(current);
+          }
+          
+          // Create gradient field for path following
+          // First set costs for the path
+          for (size_t i = 0; i < pathR.size(); i++) {
+            potarr[pathR[i]] = static_cast<float>(i) * 10.0;
+          }
+          
+          for (size_t i = 0; i < pathF.size(); i++) {
+            potarr[pathF[i]] = static_cast<float>(i + pathR.size()) * 10.0;
+          }
+          
+          // Set the start position
+          potarr[start[1] * nx + start[0]] = static_cast<float>(pathF.size() + pathR.size()) * 10.0;
+          
+          // Create gradient field by diffusing from the path
+          for (int i = 0; i < ns; i++) {
+            if (potarr[i] >= POT_HIGH) {
+              // Find nearest path cell
+              float min_dist = POT_HIGH;
+              int nearest = -1;
+              
+              // Check all path cells
+              for (int cell : pathR) {
+                int px = cell % nx;
+                int py = cell / nx;
+                int ix = i % nx;
+                int iy = i / nx;
+                float dist = hypot(px - ix, py - iy);
+                if (dist < min_dist) {
+                  min_dist = dist;
+                  nearest = cell;
+                }
+              }
+              
+              for (int cell : pathF) {
+                int px = cell % nx;
+                int py = cell / nx;
+                int ix = i % nx;
+                int iy = i / nx;
+                float dist = hypot(px - ix, py - iy);
+                if (dist < min_dist) {
+                  min_dist = dist;
+                  nearest = cell;
+                }
+              }
+              
+              if (nearest >= 0) {
+                // Make sure obstacles stay as obstacles
+                if (costarr[i] >= COST_OBS) {
+                  potarr[i] = POT_HIGH;
+                } else {
+                  // Set potential based on path distance plus obstacle cost
+                  potarr[i] = potarr[nearest] + min_dist * 10.0 + costarr[i] * 0.1;
+                }
+              }
             }
           }
+          
           return true;
         }
       }
@@ -1259,6 +1442,16 @@ NavFn::propBidirectionalAstar(int cycles)
         min_pos = i;
       }
     }
+    
+    if (min_pos < 0) {
+      // Reverse search is exhausted, try continuing with just forward search
+      if (cycle % 10 == 0) {
+        RCLCPP_DEBUG(rclcpp::get_logger("rclcpp"), "[NavFn] BiA*: Reverse search exhausted, continuing with forward only");
+      }
+      cycle++;
+      continue;
+    }
+    
     if (min_pos >= 0) {
       updateCellBiDirAstar(min_pos, false);
       // Check if this node is in the forward closed set
@@ -1267,7 +1460,7 @@ NavFn::propBidirectionalAstar(int cycles)
         float best_cost = POT_HIGH;
         int best_meet = -1;
         // Find the best meeting point
-        for (int i : closedF) {
+        for (const int& i : closedF) {
           if (closedR.find(i) != closedR.end()) {
             float total_cost = gF[i] + gR[i];
             if (total_cost < best_cost) {
@@ -1278,27 +1471,210 @@ NavFn::propBidirectionalAstar(int cycles)
         }
         // Update potarr for path reconstruction
         if (best_meet >= 0) {
+          RCLCPP_DEBUG(
+            rclcpp::get_logger("rclcpp"),
+            "[NavFn] BiA*: Path found with cost %f at meeting point (%d,%d)",
+            best_cost, best_meet % nx, best_meet / nx);
+            
+          // Set standard potarr to high values
           for (int i = 0; i < ns; i++) {
             potarr[i] = POT_HIGH;
           }
-          // Forward part
-          for (int i : closedF) {
-            potarr[i] = gF[i];
+          
+          // Start at goal (remember the nav function goes backward from goal to start)
+          int goalCell = goal[1] * nx + goal[0];
+          potarr[goalCell] = 0;
+          
+          // Trace backward path from meeting point to goal using gR
+          std::vector<int> pathR;
+          int current = best_meet;
+          pathR.push_back(current);
+          
+          while (current != goalCell && !closedR.empty()) {
+            int next_cell = -1;
+            float min_g = POT_HIGH;
+            
+            // Check four neighbors to find the one with lowest gR
+            int x = current % nx;
+            int y = current / nx;
+            
+            // Check left
+            if (x > 0) {
+              int n = current - 1;
+              if (closedR.find(n) != closedR.end() && gR[n] < min_g) {
+                min_g = gR[n];
+                next_cell = n;
+              }
+            }
+            
+            // Check right
+            if (x < nx - 1) {
+              int n = current + 1;
+              if (closedR.find(n) != closedR.end() && gR[n] < min_g) {
+                min_g = gR[n];
+                next_cell = n;
+              }
+            }
+            
+            // Check up
+            if (y > 0) {
+              int n = current - nx;
+              if (closedR.find(n) != closedR.end() && gR[n] < min_g) {
+                min_g = gR[n];
+                next_cell = n;
+              }
+            }
+            
+            // Check down
+            if (y < ny - 1) {
+              int n = current + nx;
+              if (closedR.find(n) != closedR.end() && gR[n] < min_g) {
+                min_g = gR[n];
+                next_cell = n;
+              }
+            }
+            
+            if (next_cell == -1 || next_cell == current) {
+              break; // No progress or stuck
+            }
+            
+            current = next_cell;
+            pathR.push_back(current);
           }
-          // Reverse part (use lower cost when cells overlap)
-          for (int i : closedR) {
-            if (potarr[i] > gR[i]) {
-              potarr[i] = gR[i];
+          
+          // Trace forward path from start to meeting point using gF
+          std::vector<int> pathF;
+          current = best_meet;
+          
+          while (current != (start[1] * nx + start[0]) && !closedF.empty()) {
+            int next_cell = -1;
+            float min_g = POT_HIGH;
+            
+            // Check four neighbors to find the one with lowest gF
+            int x = current % nx;
+            int y = current / nx;
+            
+            // Check left
+            if (x > 0) {
+              int n = current - 1;
+              if (closedF.find(n) != closedF.end() && gF[n] < min_g) {
+                min_g = gF[n];
+                next_cell = n;
+              }
+            }
+            
+            // Check right
+            if (x < nx - 1) {
+              int n = current + 1;
+              if (closedF.find(n) != closedF.end() && gF[n] < min_g) {
+                min_g = gF[n];
+                next_cell = n;
+              }
+            }
+            
+            // Check up
+            if (y > 0) {
+              int n = current - nx;
+              if (closedF.find(n) != closedF.end() && gF[n] < min_g) {
+                min_g = gF[n];
+                next_cell = n;
+              }
+            }
+            
+            // Check down
+            if (y < ny - 1) {
+              int n = current + nx;
+              if (closedF.find(n) != closedF.end() && gF[n] < min_g) {
+                min_g = gF[n];
+                next_cell = n;
+              }
+            }
+            
+            if (next_cell == -1 || next_cell == current) {
+              break; // No progress or stuck
+            }
+            
+            current = next_cell;
+            pathF.push_back(current);
+          }
+          
+          // Create gradient field for path following
+          // First set costs for the path
+          for (size_t i = 0; i < pathR.size(); i++) {
+            potarr[pathR[i]] = static_cast<float>(i) * 10.0;
+          }
+          
+          for (size_t i = 0; i < pathF.size(); i++) {
+            potarr[pathF[i]] = static_cast<float>(i + pathR.size()) * 10.0;
+          }
+          
+          // Set the start position
+          potarr[start[1] * nx + start[0]] = static_cast<float>(pathF.size() + pathR.size()) * 10.0;
+          
+          // Create gradient field by diffusing from the path
+          for (int i = 0; i < ns; i++) {
+            if (potarr[i] >= POT_HIGH) {
+              // Find nearest path cell
+              float min_dist = POT_HIGH;
+              int nearest = -1;
+              
+              // Check all path cells
+              for (int cell : pathR) {
+                int px = cell % nx;
+                int py = cell / nx;
+                int ix = i % nx;
+                int iy = i / nx;
+                float dist = hypot(px - ix, py - iy);
+                if (dist < min_dist) {
+                  min_dist = dist;
+                  nearest = cell;
+                }
+              }
+              
+              for (int cell : pathF) {
+                int px = cell % nx;
+                int py = cell / nx;
+                int ix = i % nx;
+                int iy = i / nx;
+                float dist = hypot(px - ix, py - iy);
+                if (dist < min_dist) {
+                  min_dist = dist;
+                  nearest = cell;
+                }
+              }
+              
+              if (nearest >= 0) {
+                // Make sure obstacles stay as obstacles
+                if (costarr[i] >= COST_OBS) {
+                  potarr[i] = POT_HIGH;
+                } else {
+                  // Set potential based on path distance plus obstacle cost
+                  potarr[i] = potarr[nearest] + min_dist * 10.0 + costarr[i] * 0.1;
+                }
+              }
             }
           }
+          
           return true;
         }
       }
     }
 
     cycle++;
+    
+    // Every 100 cycles, log progress
+    if (cycle % 100 == 0) {
+      RCLCPP_DEBUG(
+        rclcpp::get_logger("rclcpp"),
+        "[NavFn] BiA*: Cycle %d, Forward queue size: %zu, Reverse queue size: %zu",
+        cycle, closedF.size(), closedR.size());
+    }
   }
 
+  RCLCPP_WARN(
+    rclcpp::get_logger("rclcpp"),
+    "[NavFn] BiA*: No path found after %d cycles, Forward cells: %zu, Reverse cells: %zu",
+    cycle, closedF.size(), closedR.size());
   return false;
 }
 
