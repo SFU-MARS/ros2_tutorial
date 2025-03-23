@@ -21,7 +21,7 @@ This enhanced version of NavFn includes a bidirectional A* algorithm implementat
 The bidirectional A* searches from both the start and goal positions simultaneously, which can significantly improve performance for long paths. Key features include:
 
 - **Bidirectional search**: Runs two simultaneous searches (forward from start and backward from goal)
-- **four-directional movement**: Uses the same movement model as the original A* implementation
+- **Four-directional movement**: Uses the same movement model as the original A* implementation
 - **Obstacle avoidance**: Properly respects costmap obstacles and creates paths around them
 - **Efficient path reconstruction**: Traces the optimal path through the best meeting point
 - **Gradient field**: Creates a smooth potential field for path following
@@ -38,7 +38,7 @@ planner_server:
       plugin: "nav2_bd_navfn_planner/NavfnPlanner"
       use_astar: false               # Disable regular A*
       use_bidirectional_astar: true  # Enable bidirectional A*
-      allow_unknown: true            # Optional: allow planning through unknown space
+      allow_unknown: true            # Allow planning through unknown space
 ```
 
 For the original algorithms:
@@ -66,5 +66,5 @@ ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
 
 4. In a new terminal, launch the navigation stack with the bidirectional A* planner:
 ```bash
-ros2 launch turtlebot3_navigation2 navigation2.launch.py use_sim_time:=True map:=/opt/ros/humble/share/nav2_bringup/maps/turtlebot3_world.yaml params_file:=/workspaces/ros2_tutorial/src/nav2_bd_navfn_planner/config/burger.yaml
+ros2 launch turtlebot3_navigation2 navigation2.launch.py use_sim_time:=True map:=/opt/ros/humble/share/nav2_bringup/maps/turtlebot3_world.yaml params_file:=/workspaces/ros2_tutorial/src/nav2_bd_navfn_planner/burger.yaml
 ```
