@@ -43,6 +43,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <set>
 
 namespace nav2_bd_navfn_planner
 {
@@ -281,6 +282,44 @@ public:
   /** save costmap */
   /**< write out costmap and start/goal states as fname.pgm and fname.txt */
   // void savemap(const char * fname);
+
+  /** bidirectional A* specific arrays */
+  float * potarrF;  /**< forward potential array */
+  float * potarrR;  /**< reverse potential array */
+  bool * pendingF;  /**< forward pending cells */
+  bool * pendingR;  /**< reverse pending cells */
+  std::set<int> closedF;  /**< forward closed set */
+  std::set<int> closedR;  /**< reverse closed set */
+  float * gF;  /**< forward g values (known costs) */
+  float * gR;  /**< reverse g values (known costs) */
+
+  /**
+   * @brief  Updates the cell at index n using bidirectional A* heuristic
+   * @param n The index to update
+   * @param forward True if updating in forward direction, false for reverse
+   */
+  void updateCellBiDirAstar(int n, bool forward);
+
+  /**
+   * @brief  Run propagation for <cycles> iterations using bidirectional A*
+   * @param cycles The maximum number of iterations to run for
+   * @return true if the paths meet in the middle
+   */
+  bool propBidirectionalAstar(int cycles);
+
+  /**
+   * @brief Calculate heuristic value for a cell
+   * @param index Cell index
+   * @param target_x Target x coordinate
+   * @param target_y Target y coordinate
+   * @return Heuristic value
+   */
+  float calculateHeuristic(int index, int target_x, int target_y);
+
+  /**
+   * @brief Initialize the bidirectional A* arrays
+   */
+  void setupBiDirNavFn();
 };
 
 }  // namespace nav2_bd_navfn_planner

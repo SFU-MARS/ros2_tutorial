@@ -307,6 +307,7 @@ planner_server:
     GridBased:
       plugin: "nav2_bd_navfn_planner/NavfnPlanner"
       tolerance: 0.5
+      use_bidirectional_astar: true
       use_astar: false
       allow_unknown: true
 

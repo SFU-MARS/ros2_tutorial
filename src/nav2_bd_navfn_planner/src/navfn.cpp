@@ -115,6 +115,12 @@ NavFn::NavFn(int xs, int ys)
   potarr = NULL;
   pending = NULL;
   gradx = grady = NULL;
+  potarrF = NULL;
+  potarrR = NULL;
+  pendingF = NULL;
+  pendingR = NULL;
+  gF = NULL;
+  gR = NULL;
   setNavArr(xs, ys);
 
   // priority buffers
@@ -172,6 +178,24 @@ NavFn::~NavFn()
   }
   if (pb3) {
     delete[] pb3;
+  }
+  if (potarrF) {
+    delete[] potarrF;
+  }
+  if (potarrR) {
+    delete[] potarrR;
+  }
+  if (pendingF) {
+    delete[] pendingF;
+  }
+  if (pendingR) {
+    delete[] pendingR;
+  }
+  if (gF) {
+    delete[] gF;
+  }
+  if (gR) {
+    delete[] gR;
   }
 }
 
@@ -1032,6 +1056,242 @@ NavFn::gradCell(int n)
 bool NavFn::calcBidirectionalAstar()
 {
   // TODO: Implement bidirectional A* algorithm
+  return false;
+}
+
+void
+NavFn::setupBiDirNavFn()
+{
+  // Reset arrays
+  if (potarrF) {
+    delete[] potarrF;
+  }
+  if (potarrR) {
+    delete[] potarrR;
+  }
+  if (pendingF) {
+    delete[] pendingF;
+  }
+  if (pendingR) {
+    delete[] pendingR;
+  }
+  if (gF) {
+    delete[] gF;
+  }
+  if (gR) {
+    delete[] gR;
+  }
+
+  potarrF = new float[ns];
+  potarrR = new float[ns];
+  pendingF = new bool[ns];
+  pendingR = new bool[ns];
+  gF = new float[ns];
+  gR = new float[ns];
+
+  // Initialize arrays
+  for (int i = 0; i < ns; i++) {
+    potarrF[i] = POT_HIGH;
+    potarrR[i] = POT_HIGH;
+    pendingF[i] = false;
+    pendingR[i] = false;
+    gF[i] = POT_HIGH;
+    gR[i] = POT_HIGH;
+  }
+
+  // Clear closed sets
+  closedF.clear();
+  closedR.clear();
+
+  // Initialize start and goal
+  int k = start[1] * nx + start[0];
+  gF[k] = 0;
+  potarrF[k] = calculateHeuristic(k, goal[0], goal[1]);
+  pendingF[k] = true;
+
+  k = goal[1] * nx + goal[0];
+  gR[k] = 0;
+  potarrR[k] = calculateHeuristic(k, start[0], start[1]);
+  pendingR[k] = true;
+}
+
+float
+NavFn::calculateHeuristic(int index, int target_x, int target_y)
+{
+  int current_x = index % nx;
+  int current_y = index / nx;
+  // Using Manhattan distance as heuristic (since we use 4-directional movement)
+  return fabs(current_x - target_x) + fabs(current_y - target_y);
+}
+
+void
+NavFn::updateCellBiDirAstar(int n, bool forward)
+{
+  float * potarr_current = forward ? potarrF : potarrR;
+  float * g_current = forward ? gF : gR;
+  bool * pending_current = forward ? pendingF : pendingR;
+  std::set<int> & closed_current = forward ? closedF : closedR;
+  int target_x = forward ? goal[0] : start[0];
+  int target_y = forward ? goal[1] : start[1];
+
+  if (closed_current.find(n) != closed_current.end()) {
+    return;  // Already in closed set
+  }
+
+  // Get neighbors
+  int x = n % nx, y = n / nx;
+  float tc;  // neighbor's travel cost
+
+  // Check four neighbors
+  if (x > 0) {  // left
+    int nn = n - 1;
+    tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
+    if (tc >= 0 && g_current[n] + tc < g_current[nn]) {
+      g_current[nn] = g_current[n] + tc;
+      potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
+      pending_current[nn] = true;
+    }
+  }
+
+  if (x < nx - 1) {  // right
+    int nn = n + 1;
+    tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
+    if (tc >= 0 && g_current[n] + tc < g_current[nn]) {
+      g_current[nn] = g_current[n] + tc;
+      potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
+      pending_current[nn] = true;
+    }
+  }
+
+  if (y > 0) {  // up
+    int nn = n - nx;
+    tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
+    if (tc >= 0 && g_current[n] + tc < g_current[nn]) {
+      g_current[nn] = g_current[n] + tc;
+      potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
+      pending_current[nn] = true;
+    }
+  }
+
+  if (y < ny - 1) {  // down
+    int nn = n + nx;
+    tc = COST_NEUTRAL + COST_FACTOR * costarr[nn];
+    if (tc >= 0 && g_current[n] + tc < g_current[nn]) {
+      g_current[nn] = g_current[n] + tc;
+      potarr_current[nn] = g_current[nn] + calculateHeuristic(nn, target_x, target_y);
+      pending_current[nn] = true;
+    }
+  }
+
+  pending_current[n] = false;
+  closed_current.insert(n);
+}
+
+bool
+NavFn::propBidirectionalAstar(int cycles)
+{
+  int cycle = 0;  // which cycle we're on
+
+  // Set up initial conditions
+  setupBiDirNavFn();
+
+  // Main loop
+  while (cycle < cycles) {
+    // Forward search
+    float min_val = POT_HIGH;
+    int min_pos = -1;
+    for (int i = 0; i < ns; i++) {
+      if (pendingF[i] && potarrF[i] < min_val) {
+        min_val = potarrF[i];
+        min_pos = i;
+      }
+    }
+    if (min_pos >= 0) {
+      updateCellBiDirAstar(min_pos, true);
+      // Check if this node is in the reverse closed set
+      if (closedR.find(min_pos) != closedR.end()) {
+        // Found a meeting point! Update potarr for path reconstruction
+        float best_cost = POT_HIGH;
+        int best_meet = -1;
+        // Find the best meeting point
+        for (int i : closedF) {
+          if (closedR.find(i) != closedR.end()) {
+            float total_cost = gF[i] + gR[i];
+            if (total_cost < best_cost) {
+              best_cost = total_cost;
+              best_meet = i;
+            }
+          }
+        }
+        // Update potarr for path reconstruction
+        if (best_meet >= 0) {
+          for (int i = 0; i < ns; i++) {
+            potarr[i] = POT_HIGH;
+          }
+          // Forward part
+          for (int i : closedF) {
+            potarr[i] = gF[i];
+          }
+          // Reverse part (use lower cost when cells overlap)
+          for (int i : closedR) {
+            if (potarr[i] > gR[i]) {
+              potarr[i] = gR[i];
+            }
+          }
+          return true;
+        }
+      }
+    }
+
+    // Reverse search
+    min_val = POT_HIGH;
+    min_pos = -1;
+    for (int i = 0; i < ns; i++) {
+      if (pendingR[i] && potarrR[i] < min_val) {
+        min_val = potarrR[i];
+        min_pos = i;
+      }
+    }
+    if (min_pos >= 0) {
+      updateCellBiDirAstar(min_pos, false);
+      // Check if this node is in the forward closed set
+      if (closedF.find(min_pos) != closedF.end()) {
+        // Found a meeting point! Update potarr for path reconstruction
+        float best_cost = POT_HIGH;
+        int best_meet = -1;
+        // Find the best meeting point
+        for (int i : closedF) {
+          if (closedR.find(i) != closedR.end()) {
+            float total_cost = gF[i] + gR[i];
+            if (total_cost < best_cost) {
+              best_cost = total_cost;
+              best_meet = i;
+            }
+          }
+        }
+        // Update potarr for path reconstruction
+        if (best_meet >= 0) {
+          for (int i = 0; i < ns; i++) {
+            potarr[i] = POT_HIGH;
+          }
+          // Forward part
+          for (int i : closedF) {
+            potarr[i] = gF[i];
+          }
+          // Reverse part (use lower cost when cells overlap)
+          for (int i : closedR) {
+            if (potarr[i] > gR[i]) {
+              potarr[i] = gR[i];
+            }
+          }
+          return true;
+        }
+      }
+    }
+
+    cycle++;
+  }
+
   return false;
 }
 
