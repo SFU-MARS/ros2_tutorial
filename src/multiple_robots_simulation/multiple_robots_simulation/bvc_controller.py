@@ -16,20 +16,29 @@ class BVCController(Node):
         def __init__(self):
                 super().__init__('bvc_controller')
 
-                self.safety_radius = 0.3
-                self.max_linear_speed = 0.2
-                robot_config = "robot_config.yaml"
-                world_size = 15
-                self.max_angular_speed = 0.5
-                self.update_rate = 10
+                self.declare_parameter('safety_radius', 0.3)
+                self.declare_parameter('update_rate', 2)
+                self.declare_parameter('max_linear_speed', 0.2)
+                self.declare_parameter('goal_tolerance', 0.2)
+                self.declare_parameter('config_file', "robot_config.yaml")
+                self.declare_parameter('world_size', 15.0)
+                self.declare_parameter('max_angular_speed', 0.5)
+                self.declare_parameter('angle_tolerance', 0.1)
+
+                self.safety_radius = self.get_parameter('safety_radius').value
+                self.max_linear_speed = self.get_parameter('max_linear_speed').value
+                robot_config = self.get_parameter('config_file').value
+                world_size = self.get_parameter('world_size').value
+                self.max_angular_speed = self.get_parameter('max_angular_speed').value
+                self.update_rate = self.get_parameter('update_rate').value
 
                 self.world_corners = np.array([
                 [-world_size, -world_size, world_size, world_size], 
                 [-world_size, world_size, world_size, -world_size]
                 ])
 
-                self.goal_tolerance = 0.2
-                self.angle_tolerance = 0.1
+                self.goal_tolerance = self.get_parameter('goal_tolerance').value
+                self.angle_tolerance = self.get_parameter('angle_tolerance').value
 
 
                 try:

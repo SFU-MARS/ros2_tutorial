@@ -43,7 +43,7 @@ def generate_launch_description():
         output='screen',
         parameters=[
             {'safety_radius': 0.3},
-            {'update_rate': 5.0},
+            {'update_rate': 2},
             {'max_linear_speed': 0.2},
             {'goal_tolerance': 0.2},
             {'config_file': config_file},
