@@ -11,9 +11,6 @@
   <depend>rclpy</depend>
   <depend>ros2launch</depend>
 
-  <depend>turtlebot3_bringup</depend>
-  <depend>hls_lfcd_lds_driver</depend>
-  <depend>ld08_driver</depend>
 
   <depend>ament_index_python</depend>
   
