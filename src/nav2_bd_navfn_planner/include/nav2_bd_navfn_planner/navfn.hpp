@@ -32,8 +32,7 @@
 
 //
 // Navigation function computation
-// Uses Dijkstra's method
-// Modified for Euclidean-distance computation
+// Modified for Bidirectional A* search
 //
 
 #ifndef NAV2_BD_NAVFN_PLANNER__NAVFN_HPP_
@@ -80,23 +79,6 @@ namespace nav2_bd_navfn_planner
 #define PRIORITYBUFSIZE 10000
 
 /**
-  Navigation function call.
-  \param costmap Cost map array, of type COSTTYPE; origin is upper left
-    NOTE: will be modified to have a border of obstacle costs
-  \param nx Width of map in cells
-  \param ny Height of map in cells
-  \param goal X,Y position of goal cell
-  \param start X,Y position of start cell
-
-Returns length of plan if found, and fills an array with x,y interpolated
-positions at about 1/2 cell resolution; else returns 0.
-*/
-int create_nav_plan_astar(
-  const COSTTYPE * costmap, int nx, int ny,
-  int * goal, int * start,
-  float * plan, int nplan);
-
-/**
  * @class NavFn
  * @brief Navigation function class. Holds buffers for costmap, navfn map. Maps are pixel-based.
  *  Origin is upper left, x is right, y is down.
@@ -131,21 +113,10 @@ public:
   void setCostmap(const COSTTYPE * cmap, bool isROS = true, bool allow_unknown = true);
 
   /**
-   * @brief  Calculates a plan using the A* heuristic, returns true if one is found
-   * @return True if a plan is found, false otherwise
-   */
-  bool calcNavFnAstar();
-
-  /**
    * @brief  Calculates a plan using the Bidirectional A* heuristic
    * @return True if a plan is found, false otherwise
    */
   bool calcBidirectionalAstar();
-
-  /**
-   * @brief Caclulates the full navigation function using Dijkstra
-   */
-  bool calcNavFnDijkstra(bool atStart = false);
 
   /**
    * @brief  Accessor for the x-coordinates of a path
@@ -212,42 +183,11 @@ public:
    */
   void initCost(int k, float v);
 
-  /** propagation */
-
-  /**
-   * @brief  Updates the cell at index n
-   * @param n The index to update
-   */
-  void updateCell(int n);
-
-  /**
-   * @brief  Updates the cell at index n using the A* heuristic
-   * @param n The index to update
-   */
-  void updateCellAstar(int n);
-
   /**
    * @brief  Set up navigation potential arrays for new propagation
    * @param keepit whether or not use COST_NEUTRAL
    */
   void setupNavFn(bool keepit = false);
-
-  /**
-   * @brief  Run propagation for <cycles> iterations, or until start is reached using
-   * breadth-first Dijkstra method
-   * @param cycles The maximum number of iterations to run for
-   * @param atStart Whether or not to stop when the start point is reached
-   * @return true if the start point is reached
-   */
-  bool propNavFnDijkstra(int cycles, bool atStart = false);
-
-  /**
-   * @brief  Run propagation for <cycles> iterations, or until start is reached using
-   * the best-first A* method with Euclidean distance heuristic
-   * @param cycles The maximum number of iterations to run for
-   * @return true if the start point is reached
-   */
-  bool propNavFnAstar(int cycles);  /**< returns true if start point found */
 
   /** gradient and paths */
   float * gradx, * grady;  /**< gradient arrays, size of potential array */
@@ -272,54 +212,6 @@ public:
   float gradCell(int n);  /**< calculates gradient at cell <n>, returns norm */
 
   float pathStep;  /**< step size for following gradient */
-
-  /** display callback */
-  /**< <n> is the number of cycles between updates  */
-  // void display(void fn(NavFn * nav), int n = 100);
-  // int displayInt;  /**< save second argument of display() above */
-  // void (* displayFn)(NavFn * nav);  /**< display function itself */
-
-  /** save costmap */
-  /**< write out costmap and start/goal states as fname.pgm and fname.txt */
-  // void savemap(const char * fname);
-
-  /** bidirectional A* specific arrays */
-  float * potarrF;  /**< forward potential array */
-  float * potarrR;  /**< reverse potential array */
-  bool * pendingF;  /**< forward pending cells */
-  bool * pendingR;  /**< reverse pending cells */
-  std::set<int> closedF;  /**< forward closed set */
-  std::set<int> closedR;  /**< reverse closed set */
-  float * gF;  /**< forward g values (known costs) */
-  float * gR;  /**< reverse g values (known costs) */
-
-  /**
-   * @brief  Updates the cell at index n using bidirectional A* heuristic
-   * @param n The index to update
-   * @param forward True if updating in forward direction, false for reverse
-   */
-  void updateCellBiDirAstar(int n, bool forward);
-
-  /**
-   * @brief  Run propagation for <cycles> iterations using bidirectional A*
-   * @param cycles The maximum number of iterations to run for
-   * @return true if the paths meet in the middle
-   */
-  bool propBidirectionalAstar(int cycles);
-
-  /**
-   * @brief Calculate heuristic value for a cell
-   * @param index Cell index
-   * @param target_x Target x coordinate
-   * @param target_y Target y coordinate
-   * @return Heuristic value
-   */
-  float calculateHeuristic(int index, int target_x, int target_y);
-
-  /**
-   * @brief Initialize the bidirectional A* arrays
-   */
-  void setupBiDirNavFn();
 };
 
 }  // namespace nav2_bd_navfn_planner

@@ -83,16 +83,13 @@ NavfnPlanner::configure(
   // Declare this plugin's parameters
   declare_parameter_if_not_declared(node, name + ".tolerance", rclcpp::ParameterValue(0.5));
   node->get_parameter(name + ".tolerance", tolerance_);
-  declare_parameter_if_not_declared(node, name + ".use_astar", rclcpp::ParameterValue(false));
-  node->get_parameter(name + ".use_astar", use_astar_);
   declare_parameter_if_not_declared(node, name + ".allow_unknown", rclcpp::ParameterValue(true));
   node->get_parameter(name + ".allow_unknown", allow_unknown_);
   declare_parameter_if_not_declared(
     node, name + ".use_final_approach_orientation", rclcpp::ParameterValue(false));
   node->get_parameter(name + ".use_final_approach_orientation", use_final_approach_orientation_);
-  // BD
   declare_parameter_if_not_declared(
-    node, name + ".use_bidirectional_astar", rclcpp::ParameterValue(false));
+    node, name + ".use_bidirectional_astar", rclcpp::ParameterValue(true));
   node->get_parameter(name + ".use_bidirectional_astar", use_bidirectional_astar_);
 
   // Create a planner based on the new costmap size
@@ -267,14 +264,9 @@ NavfnPlanner::makePlan(
 
   planner_->setStart(map_goal);
   planner_->setGoal(map_start);
-  // BD
-  if (use_bidirectional_astar_) {
-    planner_->calcBidirectionalAstar();
-  } else if (use_astar_) {
-    planner_->calcNavFnAstar();
-  } else {
-    planner_->calcNavFnDijkstra(true);
-  }
+  
+  // Only use bidirectional A*
+  planner_->calcBidirectionalAstar();
 
   double resolution = costmap_->getResolution();
   geometry_msgs::msg::Pose p, best_pose;
@@ -450,43 +442,6 @@ NavfnPlanner::getPointPotential(const geometry_msgs::msg::Point & world_point)
   return planner_->potarr[index];
 }
 
-// bool
-// NavfnPlanner::validPointPotential(const geometry_msgs::msg::Point & world_point)
-// {
-//   return validPointPotential(world_point, tolerance_);
-// }
-
-// bool
-// NavfnPlanner::validPointPotential(
-//   const geometry_msgs::msg::Point & world_point, double tolerance)
-// {
-//   const double resolution = costmap_->getResolution();
-
-//   geometry_msgs::msg::Point p = world_point;
-//   double potential = getPointPotential(p);
-//   if (potential < POT_HIGH) {
-//     // world_point is reachable by itself
-//     return true;
-//   } else {
-//     // world_point, is not reachable. Trying to find any
-//     // reachable point within its tolerance region
-//     p.y = world_point.y - tolerance;
-//     while (p.y <= world_point.y + tolerance) {
-//       p.x = world_point.x - tolerance;
-//       while (p.x <= world_point.x + tolerance) {
-//         potential = getPointPotential(p);
-//         if (potential < POT_HIGH) {
-//           return true;
-//         }
-//         p.x += resolution;
-//       }
-//       p.y += resolution;
-//     }
-//   }
-
-//   return false;
-// }
-
 bool
 NavfnPlanner::worldToMap(double wx, double wy, unsigned int & mx, unsigned int & my)
 {
@@ -539,13 +494,10 @@ NavfnPlanner::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameter
         tolerance_ = parameter.as_double();
       }
     } else if (type == ParameterType::PARAMETER_BOOL) {
-      if (name == name_ + ".use_astar") {
-        use_astar_ = parameter.as_bool();
-      } else if (name == name_ + ".allow_unknown") {
+      if (name == name_ + ".allow_unknown") {
         allow_unknown_ = parameter.as_bool();
       } else if (name == name_ + ".use_final_approach_orientation") {
         use_final_approach_orientation_ = parameter.as_bool();
-        // BD
       } else if (name == name_ + ".use_bidirectional_astar") {
         use_bidirectional_astar_ = parameter.as_bool();
       }
