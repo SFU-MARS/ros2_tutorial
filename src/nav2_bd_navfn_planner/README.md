@@ -1,8 +1,8 @@
 # Adapted NavFn Planner with Bidirectional A*
 
 An enhanced version of the NavFn planner that introduces bidirectional path planning while maintaining ROS 2 Nav2 compatibility. This implementation is adapted from:
-- ROS 2 Navigation's  [nav2_navfn_planner](https://github.com/ros-navigation/navigation2/tree/main/nav2_navfn_planner)
-- Bidirectional A* implementation concepts from [ivanbgd's A* implementation](https://github.com/ivanbgd/A-Star_Algorithm/blob/master/Bidirectional_A-Star.py)
+- Nav2's  [nav2_navfn_planner](https://github.com/ros-navigation/navigation2/tree/main/nav2_navfn_planner)
+- Ivanbgd's [bidirectional_a_star_implementation](https://github.com/ivanbgd/A-Star_Algorithm/blob/master/Bidirectional_A-Star.py)
 
 
 ## Configuration
