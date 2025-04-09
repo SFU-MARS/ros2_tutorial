@@ -1,6 +1,11 @@
 # Adapted NavFn Planner with Bidirectional A*
 
-An enhanced version of the NavFn planner that introduces bidirectional path planning while maintaining ROS 2 Nav2 compatibility. This implementation is adapted from the original NavFn planner in the ROS 2 Navigation Stack and draws inspiration from bidirectional search implementations at [nav2_navfn_planner](https://github.com/ros-navigation/navigation2/tree/main/nav2_navfn_planner) and [ivanbgd's bidirectional A* implementation](https://github.com/ivanbgd/A-Star_Algorithm/blob/master/Bidirectional_A-Star.py).
+An enhanced version of the NavFn planner that introduces bidirectional path planning while maintaining ROS 2 Nav2 compatibility. This implementation is adapted from:
+- Original NavFn planner by Willow Garage, Inc. (BSD License 2.0)
+- ROS 2 Navigation Stack's nav2_navfn_planner
+- Bidirectional A* implementation concepts from [ivanbgd's A* implementation](https://github.com/ivanbgd/A-Star_Algorithm/blob/master/Bidirectional_A-Star.py)
+
+Our adaptation combines NavFn's proven gradient-based path extraction with efficient bidirectional search techniques. The bidirectional search implementation is particularly inspired by ivanbgd's approach of using adaptive expansion rates and early termination strategies, while maintaining NavFn's robust cost handling and ROS 2 integration.
 
 ## Configuration
 
@@ -12,29 +17,58 @@ planner_server:
     planner_plugins: ["GridBased"]
     GridBased:
       plugin: "nav2_bd_navfn_planner/NavfnPlanner"
-      tolerance: 0.5
+      tolerance: 0.5                 # How close to goal we consider success (meters)
       use_bidirectional_astar: true  # Defaults to true if not specified
-      allow_unknown: true
+      allow_unknown: true            # Whether to allow planning through unknown space
 ```
+
+For detailed implementation specifics, see [IMPLEMENTATION_DETAILS.md](IMPLEMENTATION_DETAILS.md).
 
 ## Implementation Notes
 
-The planner makes several key decisions to optimize performance:
+The planner optimizes path finding through several key strategies:
 
-1. For goals closer than 5.0 units:
-   - Uses direct path planning
-   - Creates simple gradient to goal
-   - Avoids overhead of bidirectional search
+1. Adaptive Distance-Based Planning:
+   ```cpp
+   // Quick path for nearby goals - avoid bidirectional search overhead
+   float direct_distance = hypot(goal_x - start_x, goal_y - start_y);
+   if (direct_distance < 5.0) {
+       // Initialize potential field with goal at zero
+       potarr[goalCell] = 0;
+       // Simple gradient calculation follows...
+   }
+   ```
 
-2. For longer paths:
-   - Runs simultaneous searches from start and goal
-   - Dynamically adjusts expansion rates
-   - Increases meeting point checks in later stages
+2. Efficient Search Strategy:
+   ```cpp
+   // Balance search effort by adjusting expansion rates when queues become uneven
+   if (startQueue.size() > 2 * goalQueue.size()) {
+       // Slow down forward search, speed up backward search
+       forward_expand_rate = 1;
+       backward_expand_rate = 2;
+   } else if (goalQueue.size() > 2 * startQueue.size()) {
+       // Slow down backward search, speed up forward search
+       forward_expand_rate = 2;
+       backward_expand_rate = 1;
+   }
+   ```
 
-3. Path smoothing:
-   - Prioritizes orthogonal movements first
-   - Adds diagonal movements for completeness
-   - Uses weighted costs for natural paths
+3. Path Quality Improvements:
+   ```cpp
+   // Define straight movement directions (up, down, left, right)
+   const int dx_ortho[4] = {0, 1, 0, -1};
+   const int dy_ortho[4] = {-1, 0, 1, 0};
+   
+   // Apply different costs for straight vs diagonal movements
+   float move_cost;
+   if (dx == 0 || dy == 0) {
+       // Straight movements get base cost
+       move_cost = costarr[nbr];
+   } else {
+       // Diagonal movements cost ~1.414 times more
+       move_cost = INVSQRT2 * costarr[nbr];
+   }
+   ```
 
 ## Running the demo on the simulation
 
