@@ -1,11 +1,9 @@
 # Adapted NavFn Planner with Bidirectional A*
 
 An enhanced version of the NavFn planner that introduces bidirectional path planning while maintaining ROS 2 Nav2 compatibility. This implementation is adapted from:
-- Original NavFn planner by Willow Garage, Inc. (BSD License 2.0)
-- ROS 2 Navigation Stack's nav2_navfn_planner
+- ROS 2 Navigation's  [nav2_navfn_planner](https://github.com/ros-navigation/navigation2/tree/main/nav2_navfn_planner)
 - Bidirectional A* implementation concepts from [ivanbgd's A* implementation](https://github.com/ivanbgd/A-Star_Algorithm/blob/master/Bidirectional_A-Star.py)
 
-Our adaptation combines NavFn's proven gradient-based path extraction with efficient bidirectional search techniques. The bidirectional search implementation is particularly inspired by ivanbgd's approach of using adaptive expansion rates and early termination strategies, while maintaining NavFn's robust cost handling and ROS 2 integration.
 
 ## Configuration
 
@@ -21,8 +19,6 @@ planner_server:
       use_bidirectional_astar: true  # Defaults to true if not specified
       allow_unknown: true            # Whether to allow planning through unknown space
 ```
-
-For detailed implementation specifics, see [IMPLEMENTATION_DETAILS.md](IMPLEMENTATION_DETAILS.md).
 
 ## Implementation Notes
 
