@@ -1,51 +1,42 @@
-# Navfn Planner
+# Adapted NavFn Planner with Bidirectional A*
 
-## Original Implementation
+An enhanced version of the NavFn planner that introduces bidirectional path planning while maintaining ROS 2 Nav2 compatibility. This implementation is adapted from the original NavFn planner in the ROS 2 Navigation Stack and draws inspiration from bidirectional search implementations at [nav2_navfn_planner](https://github.com/ros-navigation/navigation2/tree/main/nav2_navfn_planner) and [ivanbgd's bidirectional A* implementation](https://github.com/ivanbgd/A-Star_Algorithm/blob/master/Bidirectional_A-Star.py).
 
-The NavfnPlanner is a global planner plugin for the Nav2 Planner server. It implements the Navigation Function planner with either A\* or Dijkstra expansions. It is largely equivalent to its counterpart in ROS 1 Navigation. The Navfn planner assumes a circular robot (or a robot that can be approximated as circular for the purposes of global path planning) and operates on a weighted costmap.
-
-The original `global_planner` package from ROS (1) is a refactor on NavFn to make it more easily understandable, but it lacks in run-time performance and introduces suboptimal behaviors. As NavFn has been extremely stable for about 10 years at the time of porting, the maintainers felt no compelling reason to port over another, largely equivalent (but poorer functioning) planner. 
-
-See its [Configuration Guide Page](https://navigation.ros.org/configuration/packages/configuring-navfn.html) for additional parameter descriptions.
-
----
-
-## Bidirectional A* Enhancement
-
-This enhanced version of NavFn includes a bidirectional A* algorithm implementation while preserving the original Dijkstra and A* algorithms. This means you can choose between three path planning algorithms based on your needs:
-
-1. **Dijkstra's algorithm** (original)
-2. **A* algorithm** (original) 
-3. **Bidirectional A* algorithm** (new)
-
-The bidirectional A* searches from both the start and goal positions simultaneously, which can significantly improve performance for long paths. Key features include:
-
-- **Bidirectional search**: Runs two simultaneous searches (forward from start and backward from goal)
-- **Four-directional movement**: Uses the same movement model as the original A* implementation
-- **Obstacle avoidance**: Properly respects costmap obstacles and creates paths around them
-- **Efficient path reconstruction**: Traces the optimal path through the best meeting point
-- **Gradient field**: Creates a smooth potential field for path following
-
-### Usage
-
-To use the bidirectional A* algorithm, set the following parameters in your configuration:
+## Configuration
 
 ```yaml
 planner_server:
   ros__parameters:
+    expected_planner_frequency: 20.0
+    use_sim_time: True
     planner_plugins: ["GridBased"]
     GridBased:
       plugin: "nav2_bd_navfn_planner/NavfnPlanner"
-      use_astar: false               # Disable regular A*
-      use_bidirectional_astar: true  # Enable bidirectional A*
-      allow_unknown: true            # Allow planning through unknown space
+      tolerance: 0.5
+      use_bidirectional_astar: true  # Defaults to true if not specified
+      allow_unknown: true
 ```
 
-For the original algorithms:
-- Dijkstra: Set both `use_astar: false` and `use_bidirectional_astar: false`
-- A*: Set `use_astar: true` and `use_bidirectional_astar: false`
+## Implementation Notes
 
-### Running the Demo
+The planner makes several key decisions to optimize performance:
+
+1. For goals closer than 5.0 units:
+   - Uses direct path planning
+   - Creates simple gradient to goal
+   - Avoids overhead of bidirectional search
+
+2. For longer paths:
+   - Runs simultaneous searches from start and goal
+   - Dynamically adjusts expansion rates
+   - Increases meeting point checks in later stages
+
+3. Path smoothing:
+   - Prioritizes orthogonal movements first
+   - Adds diagonal movements for completeness
+   - Uses weighted costs for natural paths
+
+## Running the demo on the simulation
 
 To test the bidirectional A* planner with a TurtleBot3 in simulation:
 
