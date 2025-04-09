@@ -66,7 +66,7 @@ The planner optimizes path finding through several key strategies:
    }
    ```
 
-## Running the demo on the simulation
+## Running the Demo on the Simulation
 
 To test the bidirectional A* planner with a TurtleBot3 in simulation:
 
