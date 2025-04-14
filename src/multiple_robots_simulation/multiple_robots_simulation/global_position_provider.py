@@ -17,6 +17,9 @@ class GlobalPositionProvider(Node):
                 self.tf_buffer = Buffer()
                 self.tf_listener = TransformListener(self.tf_buffer, self)
 
+                self.global_positions_pub = self.create_publisher(PoseArray, '/global_robot_positions', 10)
+                self.create_timer(1.0/self.update_rate, self.publish_global_positions)
+
         def publish_global_positions(self):
                 pose_array = PoseArray()
                 pose_array.header.stamp = self.get_clock().now().to_msg()
@@ -37,6 +40,9 @@ class GlobalPositionProvider(Node):
                                 pose_array.poses.append(pose)
                         except Exception as e:
                                 self.get_logger().warning(f'Could not get transform for robot {i}: {e}')
+
+                        if len(pose_array.poses) == self.robot_count:
+                                self.global_positions_pub.publish(pose_array)
 
 
         

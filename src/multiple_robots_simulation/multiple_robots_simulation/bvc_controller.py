@@ -12,7 +12,10 @@ from geometry_msgs.msg import Twist
 from . import robot
 import tf_transformations
 
+
+
 class BVCController(Node):
+        
         def __init__(self):
                 super().__init__('bvc_controller')
 
@@ -31,6 +34,8 @@ class BVCController(Node):
                 world_size = self.get_parameter('world_size').value
                 self.max_angular_speed = self.get_parameter('max_angular_speed').value
                 self.update_rate = self.get_parameter('update_rate').value
+
+                self.loopcounter = 0
 
                 self.world_corners = np.array([
                 [-world_size, -world_size, world_size, world_size], 
@@ -132,7 +137,7 @@ class BVCController(Node):
                         self.robots_detected = True
                         self.detection_timer.cancel()
                         
-                        self.control_timer = self.create_timer(1.0/self.update_rate, self.control_loop)
+                        self.control_timer = self.create_timer(1.0/4, self.control_loop)
 
         def initialize_bvc_robots(self):
                 for i in range(self.robot_count):
@@ -243,6 +248,7 @@ class BVCController(Node):
                         msg.angular.z = float(self.angular_velocities[i])
                         
                         self.velocity_pubs[i].publish(msg)
+                        self.get_logger().info(f'robot {i+1} velocity send:{msg} in loop {self.loopcounter}')
     
 
         def control_loop(self):
@@ -254,6 +260,7 @@ class BVCController(Node):
                         self.initialize_bvc_robots()
                         return 
                 
+                self.loopcounter += 1
                 self.update_bvc_cells()
                 self.compute_velocities()
 
