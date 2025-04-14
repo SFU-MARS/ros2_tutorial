@@ -6,8 +6,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from launch.actions import  RegisterEventHandler
-from launch.event_handlers import OnProcessExit
+
 
 
 def generate_launch_description():
@@ -53,19 +52,11 @@ def generate_launch_description():
         ]
     )
 
-    bvc_event = RegisterEventHandler(
-        event_handler= OnProcessExit(
-            target_action= robot_spawner,
-            on_exit=[bvc_controller]
-        )
-    )
-
 
 
     
     return LaunchDescription([
         declare_config_file,
         declare_urdf_file,
-        robot_spawner,
-        bvc_event
+        robot_spawner
     ])
