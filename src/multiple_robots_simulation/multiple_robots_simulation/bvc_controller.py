@@ -37,10 +37,10 @@ class BVCController(Node):
 
                 self.loopcounter = 0
 
-                self.world_corners = np.array([
-                [-world_size, -world_size, world_size, world_size], 
-                [-world_size, world_size, world_size, -world_size]
-                ])
+                # self.world_corners = np.array([
+                # [-world_size, -world_size, world_size, world_size], 
+                # [-world_size, world_size, world_size, -world_size]
+                # ])
 
                 self.goal_tolerance = self.get_parameter('goal_tolerance').value
                 self.angle_tolerance = self.get_parameter('angle_tolerance').value
@@ -54,7 +54,21 @@ class BVCController(Node):
                         self.get_logger().info(f'Loaded goals from {config_path}')
 
                         self.robot_count = min(int(config['robot_count']) ,len(config['robot_positions']))
-                        self.goals = config['robot_goals']
+
+                        world_edges = []
+                        counter = 1
+                        for edge in config["world_edge"]:
+                                pose = edge[f'pose_{counter}']
+                                world_edges.append([pose['x'], pose['y']])
+                                counter += 1
+                        self.world_corners = np.array(world_edges)
+
+                        self.goals = []
+                        for goal in config['robots']:
+                                goal_pos = goal['goal']
+                                self.goals.append([goal_pos['x'],goal_pos['y']])
+
+                        # self.goals = config['robot_goals']
                                 
                 except Exception as e:
                         self.get_logger().warning(f'Could not load goals config: {e}')
