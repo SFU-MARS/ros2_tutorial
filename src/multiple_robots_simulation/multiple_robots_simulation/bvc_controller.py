@@ -7,7 +7,7 @@ import threading
 import math
 from ament_index_python.packages import get_package_share_directory
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, PoseArray
 
 from . import robot
 import tf_transformations
@@ -23,7 +23,7 @@ class BVCController(Node):
                 self.declare_parameter('update_rate', 2)
                 self.declare_parameter('max_linear_speed', 0.2)
                 self.declare_parameter('goal_tolerance', 0.2)
-                self.declare_parameter('config_file', "robot_config.yaml")
+                self.declare_parameter('config_file', "robot_config_lab.yaml")
                 self.declare_parameter('world_size', 15.0)
                 self.declare_parameter('max_angular_speed', 0.5)
                 self.declare_parameter('angle_tolerance', 0.1)
@@ -34,13 +34,7 @@ class BVCController(Node):
                 world_size = self.get_parameter('world_size').value
                 self.max_angular_speed = self.get_parameter('max_angular_speed').value
                 self.update_rate = self.get_parameter('update_rate').value
-
-                self.loopcounter = 0
-
-                # self.world_corners = np.array([
-                # [-world_size, -world_size, world_size, world_size], 
-                # [-world_size, world_size, world_size, -world_size]
-                # ])
+                
 
                 self.goal_tolerance = self.get_parameter('goal_tolerance').value
                 self.angle_tolerance = self.get_parameter('angle_tolerance').value
@@ -79,6 +73,18 @@ class BVCController(Node):
                                 [-3.0, 3.0]  
                         ])
 
+                        self.world_corners = np.array([
+                        [-world_size, -world_size, world_size, world_size], 
+                        [-world_size, world_size, world_size, -world_size]])
+
+                # Subscribe to global positions
+                self.global_positions_sub = self.create_subscription(
+                        PoseArray,
+                        '/global_robot_positions',
+                        self.global_positions_callback,
+                        10
+                )
+
                 # Initialize robot positions, velocities, and goals
                 self.positions = np.zeros((self.robot_count, 2))
                 self.velocities = np.zeros((self.robot_count, 2))
@@ -86,27 +92,14 @@ class BVCController(Node):
                 self.orientations = np.zeros(self.robot_count)
                 self.angular_velocities = np.zeros(self.robot_count)
 
+                self.position_lock = threading.Lock()
+                self.positions_received = False
+
                 self.bvc_robots = []
                 for i in range(self.robot_count):
                         r = robot.Robot(i)
                         self.bvc_robots.append(r)
 
-                self.odom_lock = threading.Lock()
-                self.odom_received = [False] * self.robot_count
-
-                self.robots_detected = False
-                self.initialized = False
-
-                self.odom_subscribers = []
-                #check the namespace of different robots
-                for i in range(self.robot_count):
-                        sub = self.create_subscription(
-                                Odometry,
-                                f'/tb_{i}/odom',
-                                lambda msg, idx=i: self.odom_callback(msg, idx),
-                                10
-                        )
-                        self.odom_subscribers.append(sub)
 
                 self.velocity_pubs = []
                 for i in range(self.robot_count):
@@ -117,51 +110,52 @@ class BVCController(Node):
                         )
                         self.velocity_pubs.append(pub)
 
+                
+                self.initialized = False
+                self.positions_received = False
+
                 self.goals_reached = [False] * self.robot_count
                 self.control_timer = None
 
                 self.detection_timer = self.create_timer(1.0, self.wait_for_robots)
 
 
-        def odom_callback(self, msg, robot_idx):
-                with self.odom_lock:
-                        self.positions[robot_idx, 0] = msg.pose.pose.position.x
-                        self.positions[robot_idx, 1] = msg.pose.pose.position.y
-
-                        orientation_q = msg.pose.pose.orientation
-                        orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
-                        _, _, yaw = tf_transformations.euler_from_quaternion(orientation_list)
-                        self.orientations[robot_idx] = yaw
-        
-                        self.odom_received[robot_idx] = True
+        def global_positions_callback(self, msg):
+                if len(msg.poses) != self.robot_count:
+                        self.get_logger().warning(f'Received {len(msg.poses)} positions, expected {self.robot_count}')
+                        return
+                
+                with self.position_lock:
+                        for i in range(self.robot_count):
+                                pose = msg.poses[i]
+                                
+                                # Store position
+                                self.positions[i, 0] = pose.position.x
+                                self.positions[i, 1] = pose.position.y
+                                
+                                q = pose.orientation
+                                _, _, yaw = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
+                                self.orientations[i] = yaw
+                
+                        self.positions_received = True
 
         def wait_for_robots(self):
-                if self.robots_detected:
-                        return
-            
-                with self.odom_lock:
-                        all_robots_found = all(self.odom_received)
-                        detected_count = sum(self.odom_received)
-        
-                # Report finding robot
-                if not all_robots_found:
-                        self.get_logger().info(f'Waiting for robots... ({detected_count}/{self.robot_count} detected)')
-                else:
-                        self.get_logger().info(f'All {self.robot_count} robots detected!')
-                        self.robots_detected = True
+                if self.positions_received:
+                        self.get_logger().info('Global positions received, starting BVC controller')
                         self.detection_timer.cancel()
-                        
-                        self.control_timer = self.create_timer(1.0/4, self.control_loop)
+                        self.control_timer = self.create_timer(1.0/self.update_rate, self.control_loop)
+                else:
+                        self.get_logger().info('Waiting for global robot positions...')
 
         def initialize_bvc_robots(self):
                 for i in range(self.robot_count):
-                # Set BVC with current position
+                        # Set BVC with current position
                         pos = self.positions[i]
                         self.bvc_robots[i].set_bvc(pos, self.safety_radius, self.world_corners)
                         self.bvc_robots[i].set_goal(self.goals[i])
-                
+        
                 self.initialized = True
-                self.get_logger().info('BVC robots initialized with current positions')
+                self.get_logger().info('BVC robots initialized with global positions')
 
         def update_bvc_cells(self):
                 for i in range(self.robot_count):
@@ -262,7 +256,6 @@ class BVCController(Node):
                         msg.angular.z = float(self.angular_velocities[i])
                         
                         self.velocity_pubs[i].publish(msg)
-                        self.get_logger().info(f'robot {i+1} velocity send:{msg} in loop {self.loopcounter}')
     
 
         def control_loop(self):
@@ -274,19 +267,17 @@ class BVCController(Node):
                         self.initialize_bvc_robots()
                         return 
                 
-                self.loopcounter += 1
-                self.update_bvc_cells()
-                self.compute_velocities()
-
-                self.publish_velocities()
-
+                with self.position_lock:
+                        self.update_bvc_cells()
+                        self.compute_velocities()
+                        self.publish_velocities()
+            
                 if all(self.goals_reached):
                         self.get_logger().info('All robots have reached their goals!')
                         if self.control_timer is not None:
                                 self.control_timer.cancel()
-                        self.create_timer(2.0,rclpy.shutdown)
+                        self.create_timer(2.0, rclpy.shutdown)
                 
-
 
 
 def main(args=None):
