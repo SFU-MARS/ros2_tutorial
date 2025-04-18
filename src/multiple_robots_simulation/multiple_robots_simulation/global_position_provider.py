@@ -10,7 +10,7 @@ class GlobalPositionProvider(Node):
         def __init__(self):
                 super().__init__('global_position_provider')
         
-                self.robot_count = 3
+                self.robot_count = 2
                 self.global_frame = 'map'
                 self.update_rate = 10.0
 

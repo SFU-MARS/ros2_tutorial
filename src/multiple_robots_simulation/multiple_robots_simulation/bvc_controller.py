@@ -47,7 +47,7 @@ class BVCController(Node):
                                 config = yaml.safe_load(f)
                         self.get_logger().info(f'Loaded goals from {config_path}')
 
-                        self.robot_count = min(int(config['robot_count']) ,len(config['robot_positions']))
+                        self.robot_count = int(config['robot_count'])
 
                         world_edges = []
                         counter = 1
@@ -62,7 +62,6 @@ class BVCController(Node):
                                 goal_pos = goal['goal']
                                 self.goals.append([float(goal_pos['x']), float(goal_pos['y'])])
 
-                        # self.goals = config['robot_goals']
                                 
                 except Exception as e:
                         self.get_logger().warning(f'Could not load goals config: {e}')

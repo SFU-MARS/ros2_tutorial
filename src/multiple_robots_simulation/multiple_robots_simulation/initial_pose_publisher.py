@@ -46,14 +46,14 @@ class InitialPosePublisher(Node):
             msg.header.frame_id = 'map'
             
             # Set position & orientation (convert yaw to quaternion)
-            msg.pose.pose.position.x = pose['x']
-            msg.pose.pose.position.y = pose['y']
+            msg.pose.pose.position.x = float(pose['x'])
+            msg.pose.pose.position.y = float(pose['y'])
             msg.pose.pose.position.z = 0.0
             
-            msg.pose.pose.orientation.x = 0
-            msg.pose.pose.orientation.y = 0
-            msg.pose.pose.orientation.z = pose['oz']
-            msg.pose.pose.orientation.w = pose['ow']
+            msg.pose.pose.orientation.x = 0.0
+            msg.pose.pose.orientation.y = 0.0
+            msg.pose.pose.orientation.z = float(pose['oz'])
+            msg.pose.pose.orientation.w = float(pose['ow'])
             
             # Set covariance (medium certainty)
             covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0,
