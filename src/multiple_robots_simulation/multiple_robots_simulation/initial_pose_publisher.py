@@ -4,7 +4,6 @@ import yaml
 import os
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from ament_index_python.packages import get_package_share_directory
-import tf_transformations
 import time
 
 class InitialPosePublisher(Node):
@@ -51,11 +50,10 @@ class InitialPosePublisher(Node):
             msg.pose.pose.position.y = pose['y']
             msg.pose.pose.position.z = 0.0
             
-            q = tf_transformations.quaternion_from_euler(0.0, 0.0, pose['yaw'])
-            msg.pose.pose.orientation.x = q[0]
-            msg.pose.pose.orientation.y = q[1]
-            msg.pose.pose.orientation.z = q[2]
-            msg.pose.pose.orientation.w = q[3]
+            msg.pose.pose.orientation.x = 0
+            msg.pose.pose.orientation.y = 0
+            msg.pose.pose.orientation.z = pose['oz']
+            msg.pose.pose.orientation.w = pose['ow']
             
             # Set covariance (medium certainty)
             covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0,

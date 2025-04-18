@@ -4,7 +4,8 @@ robots:
     initial_pose:
       x: 0.2010
       y: -0.0422
-      yaw: 3.14
+      oz: 1
+      ow: 0.0001
     goal:
       x: -2.9831
       y: 0.4437
@@ -12,7 +13,8 @@ robots:
     initial_pose:
       x: -2.9831
       y: 0.4437
-      yaw: 0.06
+      oz: 0.0003
+      ow: 1
     goal:
       x: 0.2010
       y: -0.0422
