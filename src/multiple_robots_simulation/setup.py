@@ -30,6 +30,7 @@ setup(
             "spawn_multiple_robots= multiple_robots_simulation.spawn_multiple_robots:main",
             "bvc_controller= multiple_robots_simulation.bvc_controller:main",
             "global_position_provider= multiple_robots_simulation.global_position_provider:main",
+            "initial_pose_publisher= multiple_robots_simulation.initial_pose_publisher:main",
         ],
     },
 )
