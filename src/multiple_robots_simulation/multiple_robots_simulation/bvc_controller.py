@@ -52,15 +52,15 @@ class BVCController(Node):
                         world_edges = []
                         counter = 1
                         for edge in config["world_edge"]:
-                                pose = edge[f'pose_{counter}']
-                                world_edges.append([pose['x'], pose['y']])
+                                pose = edge['pose']
+                                world_edges.append([float(pose['x']), float(pose['y'])])
                                 counter += 1
                         self.world_corners = np.array(world_edges)
 
                         self.goals = []
                         for goal in config['robots']:
                                 goal_pos = goal['goal']
-                                self.goals.append([goal_pos['x'],goal_pos['y']])
+                                self.goals.append([float(goal_pos['x']), float(goal_pos['y'])])
 
                         # self.goals = config['robot_goals']
                                 

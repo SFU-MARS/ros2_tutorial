@@ -4,6 +4,7 @@ robots:
     initial_pose:
       x: 0.2010
       y: -0.0422
+      yaw: 3.14
     goal:
       x: -2.9831
       y: 0.4437
@@ -11,20 +12,25 @@ robots:
     initial_pose:
       x: -2.9831
       y: 0.4437
+      yaw: 0.06
     goal:
       x: 0.2010
       y: -0.0422
 
 world_edge:
-    pose_1:
+  - id: 0
+    pose:
       x: 0.3864
       y: 1.1164
-    pose_2:
+  - id: 1
+    pose:
       x: 0.05739
       y: -1.3981
-    pose_3:
+  - id: 2
+    pose:
       x: -3.8544
       y: -1.1845
-    pose_4:
+  - id: 3
+    pose:
       x: -3.8622
       y: 1.3449
