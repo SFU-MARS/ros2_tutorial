@@ -10,7 +10,6 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, PoseArray
 
 from . import robot
-import tf_transformations
 
 
 
@@ -133,7 +132,7 @@ class BVCController(Node):
                                 self.positions[i, 1] = pose.position.y
                                 
                                 q = pose.orientation
-                                _, _, yaw = tf_transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
+                                _, _, yaw = self.euler_from_quaternion([q.x, q.y, q.z, q.w])
                                 self.orientations[i] = yaw
                 
                         self.positions_received = True
@@ -255,6 +254,24 @@ class BVCController(Node):
                         msg.angular.z = float(self.angular_velocities[i])
                         
                         self.velocity_pubs[i].publish(msg)
+
+        def euler_from_quaternion(self, quaternion):
+                x, y, z, w = quaternion
+                
+                sinr_cosp = 2 * (w * x + y * z)
+                cosr_cosp = 1 - 2 * (x * x + y * y)
+                roll = math.atan2(sinr_cosp, cosr_cosp)
+                
+                sinp = 2 * (w * y - z * x)
+                if abs(sinp) >= 1: 
+                        pitch = math.copysign(math.pi / 2, sinp)
+                else: 
+                        pitch = math.asin(sinp)
+                        
+                siny_cosp = 2 * (w * z + x * y) 
+                cosy_cosp = 1 - 2 * (y * y + z * z) 
+                yaw = math.atan2(siny_cosp, cosy_cosp)
+                return (roll, pitch, yaw)
     
 
         def control_loop(self):
