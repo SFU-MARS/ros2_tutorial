@@ -69,13 +69,12 @@ class InitialPosePublisher(Node):
             self.get_logger().info(f'Published initial pose for robot {robot_id}')
         
         self.get_logger().info('All initial poses published. Shutting down.')
-        self.destroy_node()
+        rclpy.shutdown()
 
 def main(args=None):
     rclpy.init(args=args)
     node = InitialPosePublisher()
-    rclpy.spin_once(node) 
-    rclpy.shutdown()
+    rclpy.spin_once(node)
 
 if __name__ == '__main__':
     main()
