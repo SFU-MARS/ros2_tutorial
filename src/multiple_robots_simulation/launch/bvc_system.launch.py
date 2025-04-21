@@ -9,18 +9,23 @@ import os
 
 def generate_launch_description():
     config_arg = DeclareLaunchArgument('config', default_value='robot_config_lab.yaml')
-    map_arg = DeclareLaunchArgument('map', default_value='non_obstacle.yaml')
-    
-    config_file = LaunchConfiguration('config_file', default='robot_config_lab.yaml')
+    map_arg = DeclareLaunchArgument('map', default_value='non_obstacle_lab.yaml')
     
     robot_count = 2
-    
-    nav2_launch_dir = os.path.join(get_package_share_directory('nav2_bringup'), 'launch')
-    map_path = os.path.join('/workspaces/ros2_tutorial/maps', 'non_obstcale_lab.yaml')
 
-    nav2_localization_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(nav2_launch_dir, 'localization_launch.py')),
-        launch_arguments={'map': map_path}.items()
+    config_file = LaunchConfiguration('config', default='robot_config_lab.yaml')
+    map_path = os.path.join('/workspaces/ros2_tutorial/maps', 'non_obstacle_lab.yaml')
+
+    map_server_node = Node(
+        package='nav2_map_server',
+        executable='map_server',
+        name='map_server',
+        output='screen',
+        parameters=[{
+            'yaml_filename': map_path,
+            'use_sim_time': False,
+            'autostart': True
+        }]
     )
 
     amcl_nodes = []
@@ -31,6 +36,7 @@ def generate_launch_description():
                 executable='amcl',
                 namespace=f'tb_{i}',
                 name=f'amcl_{i}',
+                output='screen',
                 parameters=[{
                     'robot_model_type': 'differential',
                     'global_frame_id': 'map',
@@ -38,13 +44,19 @@ def generate_launch_description():
                     'base_frame_id': f'tb_{i}/base_footprint',
                     'use_sim_time': False,
                     'autostart': True,
-                    'alpha1': 0.2,
-                    'alpha2': 0.2,
-                    'alpha3': 0.2,
-                    'alpha4': 0.2,
-                    'alpha5': 0.2,
+                    'initial_pose_x_stddev': 0.05,
+                    'initial_pose_y_stddev': 0.05,
+                    'initial_pose_a_stddev': 0.05,
+                    # Improved laser parameters
                     'laser_max_beams': 180,
                     'laser_model_type': 'likelihood_field',
+                    # Force publications
+                    'set_initial_pose': True,
+                    'first_map_only': False,
+                    'always_reset_initial_pose': True,
+                    # Recovery parameters
+                    'recovery_alpha_slow': 0.001,
+                    'recovery_alpha_fast': 0.1
                 }],
                 remappings=[
                     ('scan', f'/tb_{i}/scan'),
@@ -54,6 +66,20 @@ def generate_launch_description():
             )
         )
     
+    lifecycle_node_names = ['map_server']
+    for i in range(robot_count):
+        lifecycle_node_names.append(f'tb_{i}/amcl_{i}')
+
+    lifecycle_manager = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_localization',
+        output='screen',
+        parameters=[{
+            'autostart': True,
+            'node_names': lifecycle_node_names
+        }]
+    )
     
     # Launch global position provider
     global_position_provider = Node(
@@ -112,7 +138,8 @@ def generate_launch_description():
     ld = LaunchDescription([
         config_arg,
         map_arg,
-        nav2_localization_launch,
+        map_server_node,
+        lifecycle_manager,
         global_position_provider,
         initial_pose_event,
         bvc_controller_event
