@@ -13,8 +13,8 @@ def generate_launch_description():
     
     robot_count = 2
 
-    config_file = LaunchConfiguration('config', default='robot_config_lab.yaml')
-    map_path = os.path.join('/workspaces/ros2_tutorial/maps', 'non_obstacle_lab.yaml')
+    config_file = LaunchConfiguration('config', default='robot_config_lab_04_21.yaml')
+    map_path = os.path.join('/workspaces/ros2_tutorial/maps', 'non_obstacle_lab_04_21.yaml')
 
     map_server_node = Node(
         package='nav2_map_server',
