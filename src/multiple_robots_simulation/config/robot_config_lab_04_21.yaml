@@ -1,0 +1,38 @@
+robot_count: 2
+robots:
+  - id: 0
+    initial_pose:
+      x: -0.273
+      y: -0.041
+      oz: 1
+      ow: 0.0001
+    goal:
+      x: 3.382
+      y: -0.308
+  - id: 1
+    initial_pose:
+      x: 3.382
+      y: -0.308
+      oz: 0.0003
+      ow: 1
+    goal:
+      x: -0.273
+      y: -0.041
+
+world_edge:
+  - id: 0
+    pose:
+      x: -0.379
+      y: -1.245
+  - id: 1
+    pose:
+      x: -0.351
+      y: -1.737
+  - id: 2
+    pose:
+      x: 3.483
+      y: 2.113
+  - id: 3
+    pose:
+      x: 3.484
+      y: -1.814
