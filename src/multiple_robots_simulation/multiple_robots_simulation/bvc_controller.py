@@ -180,6 +180,11 @@ class BVCController(Node):
 
         def compute_velocities(self):
                 for i in range(self.robot_count):
+                        current_pos = self.positions[i]
+                        goal = self.goals[i]
+                        distance_goal = np.linalg.norm(goal - current_pos)
+                        self.get_logger().info(f'Robot_{i} - Current:{current_pos}, Goal:{goal}, Distance:{distance}')
+
                         if self.goals_reached[i]:
                                 # Robot that are already at goal
                                 self.velocities[i] = np.zeros(2)
