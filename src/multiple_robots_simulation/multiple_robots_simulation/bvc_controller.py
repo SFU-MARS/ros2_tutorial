@@ -56,10 +56,10 @@ class BVCController(Node):
                                 counter += 1
                         self.world_corners = np.array(world_edges)
 
-                        self.goals = []
+                        self.goals = [[],[]]
                         for goal in config['robots']:
                                 goal_pos = goal['goal']
-                                self.goals.append([float(goal_pos['x']), float(goal_pos['y'])])
+                                self.goals[int(goal['id'])] = [float(goal_pos['x']), float(goal_pos['y'])]
 
                                 
                 except Exception as e:
