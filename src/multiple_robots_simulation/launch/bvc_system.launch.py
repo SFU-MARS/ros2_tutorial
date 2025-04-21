@@ -38,7 +38,7 @@ def generate_launch_description():
                 name=f'amcl_{i}',
                 output='screen',
                 parameters=[{
-                    'robot_model_type': 'differential',
+                    'robot_model_type': 'nav2_amcl::DifferentialMotionModel',
                     'global_frame_id': 'map',
                     'odom_frame_id': f'tb_{i}/odom',
                     'base_frame_id': f'tb_{i}/base_footprint',
