@@ -1,4 +1,4 @@
-image: non_obstcale_lab.pgm
+image: non_obstacle_lab.pgm
 mode: trinary
 resolution: 0.05
 origin: [-6.03, -3.59, 0]
