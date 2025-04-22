@@ -14,7 +14,17 @@
   <depend>visualization_msgs</depend>
   <depend>numpy</depend>
   <depend>std_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
   <depend>matplotlib</depend>
+  <depend>enum</depend>
+  <depend>datetime</depend>
+  <depend>tf_transformations</depend>
+  <depend>collections</depend>
+  <depend>math</depend>
+  <depend>random</depend>
+  <depend>os</depend>
+  <depend>signal</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
