@@ -278,10 +278,10 @@ class BVCController(Node):
                 yaw = math.atan2(siny_cosp, cosy_cosp)
                 return (roll, pitch, yaw)
     
-
+#robots_detected
         def control_loop(self):
                 """Main control loop"""
-                if not self.robots_detected:
+                if not self.positions_received:
                         return
                 
                 if not self.initialized:
