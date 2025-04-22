@@ -113,3 +113,10 @@ ros2 launch turtlebot3_bringup robot.launch.py
 ```bash
 ros2 launch turtlebot3_navigation2 navigation2.launch.py use_sim_time:=False map:=/workspaces/ros2_tutorial/maps/2025-02-07_2ndtry.yaml params_file:=/workspaces/ros2_tutorial/src/nav2_bd_navfn_planner/config/burger.yaml
 ```
+
+
+## References
+
+- [A Brief History and Recent Achievements in Bidirectional Search](https://dl.acm.org/doi/10.1145/322358.322360#:~:text=DE%20CHAMPEAUX%2C%20D,Computing%20methodologies)
+- [Bidirectional Heuristic Search Again](https://era.library.ualberta.ca/items/973a4dc5-71c1-42c0-ae47-2b6e237da396/view/1e1fd5ca-10a3-4207-ba1f-a38840faea32/TR15-01.pdf#:~:text=more%20than%20half%20of%20the,number%20of%20nodes%20it%20expands)
+- [Bidirectional Search That Is Guaranteed to Meet in the Middle: Extended Version](https://webdocs.cs.ualberta.ca/~nathanst/papers/Sturtevant18smt.pdf#:~:text=states,an%20exponential%20gain%20in%2)
