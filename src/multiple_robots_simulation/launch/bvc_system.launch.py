@@ -66,9 +66,9 @@ def generate_launch_description():
             )
         )
     
-    lifecycle_node_names = ['map_server']
+    lifecycle_node_names = ['/map_server']
     for i in range(robot_count):
-        lifecycle_node_names.append(f'tb_{i}/amcl_{i}')
+        lifecycle_node_names.append(f'/tb_{i}/amcl_{i}')
 
     lifecycle_manager = Node(
         package='nav2_lifecycle_manager',
