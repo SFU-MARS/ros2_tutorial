@@ -87,5 +87,29 @@ ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
 
 4. In a new terminal, launch the navigation stack with the bidirectional A* planner:
 ```bash
-ros2 launch turtlebot3_navigation2 navigation2.launch.py use_sim_time:=True map:=/opt/ros/humble/share/nav2_bringup/maps/turtlebot3_world.yaml params_file:=/workspaces/ros2_tutorial/src/nav2_bd_navfn_planner/burger.yaml
+ros2 launch turtlebot3_navigation2 navigation2.launch.py use_sim_time:=True map:=/opt/ros/humble/share/nav2_bringup/maps/turtlebot3_world.yaml params_file:=/workspaces/ros2_tutorial/src/nav2_bd_navfn_planner/config/burger.yaml
+```
+
+## Running the Demo on the Real World
+
+To test the bidirectional A* planner with a TurtleBot3 in real world:
+
+1. Build the package:
+```bash
+colcon build --packages-select nav2_bd_navfn_planner --symlink-install
+```
+
+2. Source the setup file:
+```bash
+source install/setup.bash
+```
+
+3. Launch the bringup on the TurtleBot3:
+```bash
+ros2 launch turtlebot3_bringup robot.launch.py
+```
+
+4. In a new terminal, launch the navigation stack with the bidirectional A* planner:
+```bash
+ros2 launch turtlebot3_navigation2 navigation2.launch.py use_sim_time:=False map:=/workspaces/ros2_tutorial/maps/2025-02-07_2ndtry.yaml params_file:=/workspaces/ros2_tutorial/src/nav2_bd_navfn_planner/config/burger.yaml
 ```
