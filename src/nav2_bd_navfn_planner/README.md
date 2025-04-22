@@ -24,7 +24,7 @@ planner_server:
 
 The planner optimizes path finding through several key strategies:
 
-1. Adaptive Distance-Based Planning:
+1. Fast Path for Nearby Goals:
    ```cpp
    // Quick path for nearby goals - avoid bidirectional search overhead
    float direct_distance = hypot(goal_x - start_x, goal_y - start_y);
@@ -35,7 +35,7 @@ The planner optimizes path finding through several key strategies:
    }
    ```
 
-2. Efficient Search Strategy:
+2. Balanced Search Effort:
    ```cpp
    // Balance search effort by adjusting expansion rates when queues become uneven
    if (startQueue.size() > 2 * goalQueue.size()) {
