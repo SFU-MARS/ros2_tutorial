@@ -3,7 +3,6 @@
 import numpy as np
 import math
 import random
-from collections import defaultdict
 from .grid_map import GridMap, CellStatus
 
 
@@ -165,7 +164,7 @@ class MCTS:
         
         while step < self.simulation_steps:
             # Check if terminal state
-            if sim_state['uncleaned_count'] == 0:
+            if sim_state['uncleaned_count'] <= (np.sum(sim_state['grid'] == CellStatus.CLEANED.value) * (2 / 8)):
                 total_reward += 100
                 break
             
@@ -207,17 +206,19 @@ class MCTS:
             step += 1
         
         # Add final reward based on cleaning coverage
-        total_cells = sim_state['uncleaned_count']
-        cleaned_cells = np.sum(grid == CellStatus.CLEANED.value)
-        coverage_percent = (cleaned_cells / total_cells) * 100 if total_cells > 0 else 0
-        
-        coverage_reward = coverage_percent * 0.5
+        total_cells = sim_state['uncleaned_count'] + np.sum(grid == CellStatus.CLEANED.value)
+        if total_cells == 0:
+            coverage_reward = 0
+        else:
+            cleaned_cells = np.sum(grid == CellStatus.CLEANED.value)
+            coverage_percent = (cleaned_cells / total_cells) * 100 if total_cells > 0 else 0
+            coverage_reward = coverage_percent * 0.5
+
         total_reward += coverage_reward
         
         return total_reward
     
     def check_collision_with_obstacles(self, x, y, grid, radius_cells=5):
-        """Check if the robot collides with any obstacles considering its radius"""
         height, width = grid.shape
         
         # Define the slice bounds

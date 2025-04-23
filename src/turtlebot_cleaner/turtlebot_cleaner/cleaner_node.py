@@ -12,7 +12,6 @@ import tf2_ros
 from tf2_ros import TransformException
 import rclpy.time
 import rclpy.duration
-import tf_transformations
 from .grid_map import GridMap, CellStatus
 from .mcts import MCTS
 
@@ -32,8 +31,6 @@ class CleanerNode(Node):
         self.robot_radius = 0.2
         self.linear_speed = 0.02
         self.angular_speed = 0.05
-        self.target_arrival_dist = 0.1
-        self.target_angle_tolerance = 0.2
         self.init_map = True
 
         self.origin = None # map origin (x, y, z)
@@ -83,14 +80,13 @@ class CleanerNode(Node):
         self.get_logger().info('Cleaner node initialized!')
 
 
-    def handle_shutdown(self, signum, frame):
+    def handle_shutdown(self):
         self.get_logger().info('Shutdown signal received. Stopping robot...')
         self.send_velocity(0.0, 0.0)
         raise KeyboardInterrupt
 
 
     def map_callback(self, msg):
-        self.get_logger().info(f'Received map: {msg.info.width}x{msg.info.height}, resolution={msg.info.resolution:.3f}')
         self.map_width = msg.info.width
         self.map_height = msg.info.height
         self.resolution = msg.info.resolution
@@ -104,15 +100,16 @@ class CleanerNode(Node):
             self.init_map = False
             self.map_initialized = True
         
-        self.grid_map.update_from_occupancy_grid(msg)
+        self.grid_map.update_grid_from_map(msg)
         self.map_initialized = True
+        self.get_logger().info(f'Map Updated!')
         
 
     def update_robot_pose_from_tf(self):
         try:
             # Get the latest available transform
             transform_stamped = self.tf_buffer.lookup_transform(
-                'map', 'base_link', rclpy.time.Time(), timeout=rclpy.duration.Duration(seconds=0.1)
+                'map', 'base_link', rclpy.time.Time(), timeout=rclpy.duration.Duration(seconds=0.01)
             )
 
             # Extract position and orientation
@@ -121,12 +118,8 @@ class CleanerNode(Node):
             x, y = trans.x, trans.y
 
             # Convert quaternion to yaw
-            q = [rot.x, rot.y, rot.z, rot.w]
-            if tf_transformations:
-                _, _, yaw = tf_transformations.euler_from_quaternion(q)
-            else:
-                yaw = math.atan2(2.0 * (rot.w * rot.z + rot.x * rot.y),
-                                 1.0 - 2.0 * (rot.y * rot.y + rot.z * rot.z))
+            yaw = math.atan2(2.0 * (rot.w * rot.z + rot.x * rot.y), 1.0 - 2.0 * (rot.y * rot.y + rot.z * rot.z))
+
 
             # Update robot pose (world coordinates)
             self.robot_pose = (x, y, yaw)
@@ -136,19 +129,17 @@ class CleanerNode(Node):
                 self.robot_grid_pos = self.grid_map.world_to_grid(x, y)
                 self.grid_map.mark_cleaned(x, y)
                 self.robot_initialized = True
-                self.get_logger().info(f'Updated robot pose from TF: {self.robot_pose}, grid: {self.robot_grid_pos}')
+                self.get_logger().info(f'Robot pose Updated!')
             else:
                  self.get_logger().warn("Cannot update robot grid position, map not initialized yet.")
 
         except TransformException as e:
-            self.get_logger().warn(f"Could not get transform from 'map' to 'base_link': {e}", throttle_duration_sec=5.0)
+            self.get_logger().warn(f"Could not get transform from 'map' to 'base_link': {e}")
             return False
         return True
 
 
     def control_loop(self):
-        self.get_logger().info('Control loop...')
-
         if not self.update_robot_pose_from_tf():
              self.get_logger().warn('Robot pose update failed, skipping control cycle.')
              return
@@ -191,12 +182,20 @@ class CleanerNode(Node):
         else:
             if action == (-1, 0):
                 direction = 'left'
+                Cdx = -1.1 
+                Cdy = 0.0
             elif action == (0, 1):
                 direction = 'up'
+                Cdx = 0.0
+                Cdy = 1.1
             elif action == (0, -1):
                 direction = 'down'
+                Cdx = 0.0
+                Cdy = -1.1
             elif action == (1, 0):
                 direction = 'right'
+                Cdx = 1.1
+                Cdy = 0.0
             else:
                 self.get_logger().info('Invalid action!')
                 return
@@ -205,15 +204,16 @@ class CleanerNode(Node):
         dx, dy = action
         target_grid_x = robot_grid_pos_int[0] + dx
         target_grid_y = robot_grid_pos_int[1] + dy
+        target_grid_x_center = robot_grid_pos_int[0] + Cdx
+        target_grid_y_center = robot_grid_pos_int[1] + Cdy
 
-        target_x, target_y = self.grid_map.grid_to_world(target_grid_x, target_grid_y)
+        target_x, target_y = self.grid_map.grid_to_world(target_grid_x_center, target_grid_y_center)
 
         # Set the target pose
         self.target_pose = (target_x, target_y)
-        self.get_logger().info(f'New target computed: World={self.target_pose}, Grid=({robot_grid_pos_int[0]}, {robot_grid_pos_int[1]}) -> ({target_grid_x}, {target_grid_y}), Action={direction}')
+        self.get_logger().info(f'New target computed: World=({self.target_pose[0]:3f}, {self.target_pose[1]:3f}), Grid=({robot_grid_pos_int[0]}, {robot_grid_pos_int[1]}) -> ({target_grid_x}, {target_grid_y}), Action={direction}')
     
     def move_to_target(self):
-        self.get_logger().info('Moving...')
         if self.target_pose is None or self.robot_pose is None:
             return
         
@@ -241,22 +241,27 @@ class CleanerNode(Node):
         distance = math.sqrt(dx * dx + dy * dy)
         
         # If reached the target
-        if distance < self.resolution:
+        if distance < 0.01:
             self.get_logger().info('Reached target!')
             self.grid_map.mark_cleaned(target_x, target_y)
             self.target_pose = None
             self.send_velocity(0.0, 0.0)
             return
         
-        if abs(angle_diff) > 0.10:
+        if abs(angle_diff) > 0.05:
             # Rotate in place
             angular_z = self.angular_speed if angle_diff > 0 else -self.angular_speed
-            self.send_velocity(0.0, angular_z)
-            self.get_logger().info(f'Rotating to face target: {angle_diff} radians left')
+
+            if abs(angle_diff) > math.pi / 2:
+                self.send_velocity(0.0, 2 * angular_z)
+            else:
+                self.send_velocity(0.0, angular_z)
+
+            self.get_logger().info(f'Rotating to face target: {angle_diff:4f} radians left')
         else:
             # Move forward
             self.send_velocity(self.linear_speed, 0.0)
-            self.get_logger().info(f'Moving forward: {distance} meters')
+            self.get_logger().info(f'Moving forward: {distance:4f} meters')
 
 
     def send_velocity(self, linear_x, angular_z):
@@ -335,18 +340,17 @@ class CleanerNode(Node):
             robot_marker.pose.position.y = float(self.robot_pose[1])
             robot_marker.pose.position.z = 0.05
 
-            # Set orientation from yaw angle
-            if tf_transformations:
-                q = tf_transformations.quaternion_from_euler(0.0, 0.0, self.robot_pose[2])
-                robot_marker.pose.orientation.x = q[0]
-                robot_marker.pose.orientation.y = q[1]
-                robot_marker.pose.orientation.z = q[2]
-                robot_marker.pose.orientation.w = q[3]
-            else:
-                robot_marker.pose.orientation.w = 1.0
+            # Convert yaw (self.robot_pose[2]) to quaternion
+            yaw = self.robot_pose[2]
+            cy = math.cos(yaw * 0.5)
+            sy = math.sin(yaw * 0.5)
+            robot_marker.pose.orientation.x = 0.0
+            robot_marker.pose.orientation.y = 0.0
+            robot_marker.pose.orientation.z = sy
+            robot_marker.pose.orientation.w = cy
 
             # Scale the arrow
-            robot_marker.scale.x = self.robot_radius * 0.5 # Length of arrow
+            robot_marker.scale.x = self.robot_radius * 0.25 # Length of arrow
             robot_marker.scale.y = self.robot_radius * 0.1 # Width of arrow
             robot_marker.scale.z = self.robot_radius * 0.1 # Height of arrow
 
@@ -362,21 +366,21 @@ class CleanerNode(Node):
             target_marker.header.stamp = self.get_clock().now().to_msg()
             target_marker.ns = "target_pose"
             target_marker.id = marker_id
-            target_marker.type = Marker.SPHERE
+            target_marker.type = Marker.CUBE
             target_marker.action = Marker.ADD
 
             # Set pose
             target_marker.pose.position.x = float(self.target_pose[0])
             target_marker.pose.position.y = float(self.target_pose[1])
-            target_marker.pose.position.z = 0.05
+            target_marker.pose.position.z = 0.0
             target_marker.pose.orientation.w = 1.0
 
-            # Scale the sphere
+            # Scale
             target_marker.scale.x = float(self.resolution)
             target_marker.scale.y = float(self.resolution)
-            target_marker.scale.z = float(self.resolution)
+            target_marker.scale.z = 0.01
 
-            target_marker.color = ColorRGBA(r=1.0, g=1.0, b=0.0, a=0.9) # Yellow
+            target_marker.color = ColorRGBA(r=1.0, g=1.0, b=0.0, a=1.0) # Yellow
             target_marker.lifetime = rclpy.duration.Duration(seconds=2.0).to_msg()
             grid_markers.markers.append(target_marker)
             marker_id += 1
@@ -409,15 +413,15 @@ if __name__ == '__main__':
 
 # Build and Run Commands
 
-# source ~/.bashrc && colcon build --packages-select turtlebot3_cleaner && source install/setup.bash
-# source install/setup.bash && source ~/.bashrc && ros2 launch turtlebot3_cleaner cleaner.launch.py
+# source ~/.bashrc && colcon build --packages-select turtlebot_cleaner && source install/setup.bash
+# source install/setup.bash && source ~/.bashrc && ros2 launch turtlebot_cleaner cleaner.launch.py
 
 # source ~/.bashrc && source install/setup.bash && ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
 
-# source ~/.bashrc && source install/setup.bash && ros2 launch turtlebot3_cartographer cartographer.launch.py use_sim_time:=true rviz_config:="src/turtlebot3_cleaner/my_config.rviz"
+# source ~/.bashrc && source install/setup.bash && ros2 launch turtlebot3_cartographer cartographer.launch.py use_sim_time:=true
 
 # source ~/.bashrc && source install/setup.bash && ros2 launch turtlebot3_navigation2 navigation2.launch.py use_sim_time:=True map:=world_map.yaml
 
 # source ~/.bashrc && source install/setup.bash && ros2 run turtlebot3_teleop teleop_keyboard
 
-# source ~/.bashrc && source install/setup.bash && ros2 run rviz2 rviz2 -d src/turtlebot3_cleaner/my_config.rviz
+# source ~/.bashrc && source install/setup.bash && ros2 run rviz2 rviz2 -d src/turtlebot3_cleaner/Myconfig.rviz

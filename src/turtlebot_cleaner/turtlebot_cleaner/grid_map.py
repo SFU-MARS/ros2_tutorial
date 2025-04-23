@@ -3,8 +3,8 @@
 import numpy as np
 from enum import Enum
 # import matplotlib.pyplot as plt
-import os
-from datetime import datetime
+# import os
+# from datetime import datetime
 
 
 class CellStatus(Enum):
@@ -43,21 +43,11 @@ class GridMap:
             self.node.get_logger().warn(f'Invalid grid position: ({grid_x}, {grid_y})')
 
 
-    # def world_to_grid(self, x, y):
-    #     grid_x = int((x / self.resolution) + (self.grid_width / 2))
-    #     grid_y = int((y / self.resolution) + (self.grid_height / 2))
-    #     return grid_x, grid_y
-    
     def world_to_grid(self, x, y):
         grid_x = int((x - self.origin_x) / self.resolution)
         grid_y = int((y - self.origin_y) / self.resolution)
         return grid_x, grid_y
-
-
-    # def grid_to_world(self, grid_x, grid_y):
-    #     x = ((grid_x - (self.grid_width / 2)) * self.resolution)
-    #     y = ((grid_y - (self.grid_height / 2)) * self.resolution)
-    #     return x, y
+    
 
     def grid_to_world(self, grid_x, grid_y):
         x = (grid_x * self.resolution) + self.origin_x
@@ -71,11 +61,12 @@ class GridMap:
             return 0.0
         cleaned_cells = np.sum(self.grid == CellStatus.CLEANED.value)
         coverage = (cleaned_cells / cleanable_cells) * 100.0
-        self.node.get_logger().warn(f'Cleaned cells: {cleaned_cells}, Cleanable cells: {cleanable_cells}, Coverage: {coverage:.3f}%')
+        self.node.get_logger().info(f'Cleaned cells: {cleaned_cells}, Cleanable cells: {cleanable_cells}')
+        self.node.get_logger().warn(f'Coverage: {coverage:.3f}%')
         return coverage
 
 
-    def update_from_occupancy_grid(self, occupancy_grid, threshold=50):
+    def update_grid_from_map(self, occupancy_grid, threshold=50):
         # # Plot before update
         # plot_dir = "grid_plots"
         # if not os.path.exists(plot_dir):
@@ -108,7 +99,7 @@ class GridMap:
             temp2[0:min_height, 0:min_width] = self.cleaned_grid[0:min_height, 0:min_width]
             self.cleaned_grid = temp2
 
-            self.node.get_logger().warn(f'Grid dimensions updated: {self.grid_width}x{self.grid_height}x{self.resolution} -> {grid_width}x{grid_height}x{resolution}')
+            self.node.get_logger().warn(f'Grid dimensions updated: ({self.grid_width},{self.grid_height},{self.resolution:2f}) -> ({grid_width},{grid_height},{resolution:2f})')
 
         self.resolution = resolution
         self.grid_width = grid_width 
@@ -137,8 +128,6 @@ class GridMap:
         free_and_cleaned_mask = free_mask & was_cleaned_mask
         self.grid[free_and_cleaned_mask] = CellStatus.CLEANED.value
         self.cleaned_grid[free_and_cleaned_mask] = 1
-
-        self.node.get_logger().info(f'number of total cells: {self.grid_width * self.grid_height}')
 
         # # Plot after update
         # plt.figure(figsize=(10, 10))
