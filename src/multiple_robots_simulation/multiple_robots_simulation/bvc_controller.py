@@ -21,7 +21,7 @@ class BVCController(Node):
                 self.declare_parameter('safety_radius', 0.3)
                 self.declare_parameter('update_rate', 2)
                 self.declare_parameter('max_linear_speed', 0.2)
-                self.declare_parameter('goal_tolerance', 0.2)
+                self.declare_parameter('goal_tolerance', 0.01)
                 self.declare_parameter('config_file', "robot_config_lab.yaml")
                 self.declare_parameter('world_size', 15.0)
                 self.declare_parameter('max_angular_speed', 0.5)
@@ -54,7 +54,7 @@ class BVCController(Node):
                                 pose = edge['pose']
                                 world_edges.append([float(pose['x']), float(pose['y'])])
                                 counter += 1
-                        self.world_corners = np.array(world_edges)
+                        self.world_corners = np.array(world_edges).T
 
                         self.goals = [[],[]]
                         for goal in config['robots']:
@@ -183,7 +183,7 @@ class BVCController(Node):
                         current_pos = self.positions[i]
                         goal = self.goals[i]
                         distance_goal = np.linalg.norm(goal - current_pos)
-                        self.get_logger().info(f'Robot_{i} - Current:{current_pos}, Goal:{goal}, Distance:{distance}')
+                        self.get_logger().info(f'Robot_{i} - Current:{current_pos}, Goal:{goal}, Distance:{distance_goal}')
 
                         if self.goals_reached[i]:
                                 # Robot that are already at goal
@@ -278,7 +278,7 @@ class BVCController(Node):
                 yaw = math.atan2(siny_cosp, cosy_cosp)
                 return (roll, pitch, yaw)
     
-#robots_detected
+
         def control_loop(self):
                 """Main control loop"""
                 if not self.positions_received:
